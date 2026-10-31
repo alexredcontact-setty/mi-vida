@@ -351,7 +351,7 @@ async function entrar(crear){
   $('#err').textContent = '';
   const email = $('#email').value.trim(), password = $('#pass').value;
   if (!email || password.length < 8) return $('#err').textContent = 'Email y contraseña de 8 caracteres o más.';
-  const r = crear ? await sb.auth.signUp({email, password}) : await sb.auth.signInWithPassword({email, password});
+  const r = crear ? await sb.auth.signUp({email, password, options: {emailRedirectTo: location.origin + location.pathname}}) : await sb.auth.signInWithPassword({email, password});
   if (r.error) return $('#err').textContent = r.error.message.includes('confirm') ? 'Confirma primero el email que te ha llegado y vuelve a entrar.' : 'No se ha podido entrar: revisa email y contraseña.';
   if (crear && !r.data.session) return $('#err').textContent = 'Te ha llegado un email: confírmalo y vuelve aquí a entrar.';
 }
