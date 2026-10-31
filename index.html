@@ -1,0 +1,370 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mi Vida</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Mi Vida">
+<meta name="theme-color" content="#000000">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href="icon-192.png">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<style>
+:root{
+  --bg:#000; --card:#111113; --card2:#1c1c1e; --line:#2c2c2e;
+  --tx:#f5f5f7; --tx2:#98989f; --tx3:#636366;
+  --verde:#30d158; --acento:#ff9f0a; --acento-suave:rgba(255,159,10,.16); --azul:#0a84ff; --naranja:#ff9f0a; --rojo:#ff453a; --morado:#bf5af2; --amarillo:#ffd60a;
+  --r:20px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{background:var(--bg);color:var(--tx);overflow-x:hidden;max-width:100%}
+main,section,.card,.fila>*,.ej>*,.lista>div{min-width:0} .card{overflow-wrap:break-word} .seg button,.anillos .big,.anillos .tiny{white-space:nowrap}
+body{font:16px/1.4 -apple-system,BlinkMacSystemFont,"SF Pro Text","Inter",system-ui,sans-serif;
+  -webkit-font-smoothing:antialiased;min-height:100vh;
+  padding:calc(env(safe-area-inset-top) + 12px) 16px calc(env(safe-area-inset-bottom) + 96px)}
+h1{font:700 34px/1.1 -apple-system,"SF Pro Display",system-ui;letter-spacing:-.02em}
+h2{font:600 22px/1.2 -apple-system,"SF Pro Display",system-ui;letter-spacing:-.01em;margin:28px 4px 10px}
+.sub{color:var(--tx2);font-size:15px;margin-top:4px}
+.card{background:var(--card);border-radius:var(--r);padding:16px;margin-bottom:12px}
+.fila{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.lbl{color:var(--tx2);font-size:13px;font-weight:500;text-transform:uppercase;letter-spacing:.04em}
+.big{font:700 30px/1.1 -apple-system,"SF Pro Display",system-ui;letter-spacing:-.02em}
+.muted{color:var(--tx2)} .tiny{font-size:13px;color:var(--tx3)}
+.barra{height:8px;border-radius:8px;background:var(--card2);overflow:hidden;margin-top:10px}
+.barra>i{display:block;height:100%;border-radius:8px;background:var(--acento);transition:width .6s}
+.lista>div{padding:12px 0;border-top:1px solid var(--line)} .lista>div:first-child{border-top:0;padding-top:4px}
+.pill{font-size:12px;font-weight:600;padding:4px 10px;border-radius:99px;background:var(--card2);color:var(--tx2)}
+.pill.on{background:var(--acento-suave);color:var(--acento)}
+.pill.off{background:rgba(255,69,58,.15);color:var(--rojo)}
+button{font:inherit;border:0;cursor:pointer}
+.btn{background:var(--tx);color:#000;font-weight:600;border-radius:14px;padding:14px 18px;width:100%}
+.btn2{background:var(--card2);color:var(--tx);font-weight:600;border-radius:12px;padding:10px 14px}
+input{font:inherit;color:var(--tx);background:var(--card2);border:1px solid transparent;border-radius:12px;padding:12px 14px;width:100%;outline:none}
+input:focus{border-color:var(--acento)}
+.seg{display:flex;background:var(--card2);border-radius:10px;padding:2px}
+.seg button{flex:1;background:none;color:var(--tx2);padding:7px 10px;border-radius:8px;font-size:14px;font-weight:600}
+.seg button.act{background:#3a3a3c;color:var(--tx)}
+.check{display:flex;gap:12px;align-items:flex-start}
+.check b{flex:0 0 22px;height:22px;border-radius:50%;border:2px solid var(--tx3);margin-top:1px}
+.check.ok b{background:var(--acento);border-color:var(--acento);box-shadow:inset 0 0 0 3px var(--card)}
+.check.ok span{color:var(--tx3);text-decoration:line-through}
+.puntos{display:flex;gap:6px;margin-top:12px}
+.puntos i{flex:1;height:30px;border-radius:8px;background:var(--card2);display:grid;place-items:center;font-style:normal;font-size:11px;color:var(--tx3)}
+.puntos i.ok{background:var(--acento-suave);color:var(--acento)} .puntos i.ko{background:rgba(255,69,58,.15);color:var(--rojo)}
+.anillos{display:flex;gap:14px;align-items:center}
+.ring{flex:0 0 auto}
+.tabbar{position:fixed;left:0;right:0;bottom:0;background:rgba(18,18,20,.82);backdrop-filter:saturate(180%) blur(20px);-webkit-backdrop-filter:saturate(180%) blur(20px);
+  border-top:1px solid #222;display:flex;justify-content:space-around;padding:8px 6px calc(env(safe-area-inset-bottom) + 8px)}
+.tabbar button{background:none;color:var(--tx3);font-size:10px;font-weight:600;display:flex;flex-direction:column;align-items:center;gap:3px;flex:1;padding:2px 0}
+.tabbar button svg{width:24px;height:24px;padding:3px 10px;box-sizing:content-box;transition:background .2s}
+.tabbar button.act{color:var(--acento)} .tabbar button.act svg{background:var(--acento-suave);border-radius:10px;padding:3px 10px;box-sizing:content-box} .tabbar button.pronto{opacity:.4}
+.vista{display:none} .vista.act{display:block;animation:ent .25s ease}
+@keyframes ent{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.ej{display:grid;grid-template-columns:1fr auto;gap:2px 10px}
+.ej small{grid-column:1/-1;color:var(--tx3);font-size:13px}
+.num{display:flex;gap:8px;margin-top:12px}
+.num input{flex:1;min-width:0} .num button{flex:0 0 auto} .hora-on{color:var(--acento);font-weight:600}
+#login{max-width:420px;margin:12vh auto 0}
+.err{color:var(--rojo);font-size:14px;margin-top:10px;min-height:20px}
+.toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom) + 90px);transform:translateX(-50%);background:#2c2c2e;color:var(--tx);padding:10px 16px;border-radius:99px;font-size:14px;opacity:0;transition:opacity .2s;pointer-events:none}
+.toast.on{opacity:1}
+.cab{display:flex;justify-content:space-between;align-items:flex-end}
+.salir{background:none;color:var(--tx3);font-size:13px}
+</style>
+</head>
+<body>
+
+<section id="login" hidden>
+  <svg width="64" height="64" viewBox="0 0 64 64" style="margin-bottom:22px"><circle cx="32" cy="32" r="24" fill="none" stroke="#2c2c2e" stroke-width="6"/><circle cx="32" cy="32" r="24" fill="none" stroke="#ff9f0a" stroke-width="6" stroke-linecap="round" stroke-dasharray="120 151" transform="rotate(-90 32 32)"/><circle cx="32" cy="32" r="4.5" fill="#fff"/></svg>
+  <h1>Mi Vida</h1>
+  <p class="sub" style="margin-bottom:28px">Tu día, tus metas y tu negocio en un sitio.</p>
+  <input id="email" type="email" placeholder="Email" autocomplete="username" style="margin-bottom:10px">
+  <input id="pass" type="password" placeholder="Contraseña" autocomplete="current-password" style="margin-bottom:16px">
+  <button class="btn" id="entrar">Entrar</button>
+  <button class="btn2" id="crear" style="width:100%;margin-top:10px;background:none;color:var(--tx2)">Primera vez: crear mi cuenta</button>
+  <p class="err" id="err"></p>
+</section>
+
+<main id="app" hidden>
+  <!-- HOY -->
+  <section class="vista act" id="v-hoy">
+    <div class="cab"><div><p class="lbl" id="fecha"></p><h1 id="saludo">Hoy</h1></div><button class="salir" id="salir">Salir</button></div>
+
+    <h2>Prioridades</h2>
+    <div class="card">
+      <div class="lista" id="prios"></div>
+      <div class="num"><input id="nueva-prio" placeholder="Añadir prioridad de hoy"><button class="btn2" id="add-prio">Añadir</button></div>
+      <p class="tiny" style="margin-top:8px">Máximo 3. Lo que más dinero acerca, primero.</p>
+    </div>
+
+    <h2>Foco</h2>
+    <div class="card" id="foco"></div>
+
+    <h2>Entreno</h2>
+    <div class="card">
+      <div class="fila" style="margin-bottom:12px">
+        <div class="seg" id="tipo-dia"><button data-t="entreno">Entreno</button><button data-t="descanso">Descanso</button></div>
+        <span class="pill" id="pill-entreno"></span>
+      </div>
+      <div id="entreno"></div>
+    </div>
+
+    <h2>Comidas</h2>
+    <div class="card lista" id="comidas"></div>
+
+    <h2>Pasos</h2>
+    <div class="card">
+      <div class="fila"><div><p class="big" id="pasos-hoy">—</p><p class="tiny">de 10.000 hoy</p></div><span class="pill" id="pill-pasos"></span></div>
+      <div class="barra"><i id="bar-pasos" style="width:0"></i></div>
+      <div class="num"><input id="in-pasos" type="number" inputmode="numeric" placeholder="Pasos de hoy"><button class="btn2" data-guardar="pasos">Guardar</button></div>
+    </div>
+
+    <h2>Anoche</h2>
+    <div class="card" id="anoche"></div>
+    <p class="tiny" id="sync" style="text-align:center;margin-top:18px"></p>
+  </section>
+
+  <!-- METAS -->
+  <section class="vista" id="v-metas">
+    <p class="lbl">Hasta el 31 de enero · <span id="dias-quedan"></span></p>
+    <h1>Metas</h1>
+
+    <h2>💶 Dinero</h2>
+    <div class="card">
+      <div class="fila"><div><p class="big" id="ingresos">—</p><p class="tiny" id="ingresos-mes"></p></div><div id="ring-dinero"></div></div>
+      <div class="num"><input id="in-ingresos" type="number" inputmode="decimal" placeholder="Netos del mes (€)"><button class="btn2" data-guardar="ingresos">Guardar</button></div>
+      <p class="tiny" style="margin-top:8px">Meta: 5.000 € netos al mes, estables, en enero.</p>
+    </div>
+
+    <h2>💪 Físico</h2>
+    <div class="card">
+      <div class="fila"><p class="lbl">Esta semana</p><span class="pill" id="pill-semana"></span></div>
+      <div class="anillos" style="margin-top:12px">
+        <div id="ring-entrenos"></div><div><p class="big" id="entrenos-sem">0/5</p><p class="tiny">entrenos</p></div>
+        <div id="ring-pasos" style="margin-left:10px"></div><div><p class="big" id="pasos-sem">0/7</p><p class="tiny">días 10.000 pasos</p></div>
+      </div>
+      <p class="tiny" style="margin-top:12px" id="racha"></p>
+    </div>
+    <div class="card">
+      <div class="fila"><p class="lbl">Fuerza · meta +20 %</p><span class="pill" id="pill-fuerza"></span></div>
+      <div class="lista" id="fuerza" style="margin-top:8px"></div>
+      <p class="tiny" style="margin-top:6px">Calculado con tu mejor serie (peso × reps) de cada día.</p>
+    </div>
+
+    <h2>😴 Sueño</h2>
+    <div class="card">
+      <div class="fila"><div><p class="big" id="sueno-n">—</p><p class="tiny">noches en la cama antes de las 00:15 (últimos 7 días)</p></div></div>
+      <div class="puntos" id="sueno-puntos"></div>
+      <p class="tiny" style="margin-top:10px">Se mide con tu última y tu primera actividad en Claude. Meta: 00:00 a 08:00.</p>
+    </div>
+
+    <h2>🎥 Marca personal</h2>
+    <div class="card">
+      <div class="fila"><div><p class="big" id="videos-sem">0/10</p><p class="tiny">vídeos publicados esta semana</p></div>
+        <button class="btn2" id="mas-video">+1 vídeo hoy</button></div>
+      <div class="barra"><i id="bar-videos" style="width:0"></i></div>
+    </div>
+    <div class="card">
+      <div class="fila"><div><p class="big" id="mediana">—</p><p class="tiny">visitas típicas por vídeo · meta 1.000</p></div></div>
+      <div class="barra"><i id="bar-mediana" style="width:0;background:var(--azul)"></i></div>
+      <div class="num"><input id="in-mediana" type="number" inputmode="numeric" placeholder="Visitas típicas"><button class="btn2" data-guardar="mediana_visitas">Guardar</button></div>
+    </div>
+    <div class="card">
+      <div class="fila"><div><p class="big" id="seguidores">—</p><p class="tiny">seguidores TikTok + IG + YouTube · meta 5.000</p></div></div>
+      <div class="barra"><i id="bar-seg" style="width:0;background:var(--morado)"></i></div>
+      <div class="num"><input id="in-seguidores" type="number" inputmode="numeric" placeholder="Seguidores totales"><button class="btn2" data-guardar="seguidores">Guardar</button></div>
+    </div>
+  </section>
+</main>
+
+<nav class="tabbar" id="tabbar" hidden>
+  <button class="act" data-v="hoy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>Hoy</button>
+  <button class="pronto" data-p="Negocio"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 20h18M6 16v-5M11 16V7M16 16v-8M21 16V4"/></svg>Negocio</button>
+  <button class="pronto" data-p="Contenido"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M10 9l5 3-5 3z"/></svg>Contenido</button>
+  <button class="pronto" data-p="Cuerpo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 7v10M18 7v10M3 10v4M21 10v4M6 12h12"/></svg>Cuerpo</button>
+  <button class="pronto" data-p="Tiempo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Tiempo</button>
+  <button data-v="metas"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5"/></svg>Metas</button>
+</nav>
+<div class="toast" id="toast"></div>
+
+<script>
+const sb = supabase.createClient('https://onxujrvkcwwyrfdvwfcb.supabase.co','sb_publishable_s3R6hH5kMF3n0APFI4reEw_zu74_PiD');
+const $ = s => document.querySelector(s);
+const fmt = n => n == null ? '—' : new Intl.NumberFormat('es-ES', {useGrouping: 'always', maximumFractionDigits: 1}).format(n);
+const tz = 'Europe/Madrid';
+const hoyStr = () => new Date().toLocaleDateString('sv-SE', {timeZone: tz});
+const addDias = (s, n) => { const d = new Date(s + 'T12:00:00'); d.setDate(d.getDate() + n); return d.toLocaleDateString('sv-SE'); };
+const lunes = s => { const d = new Date(s + 'T12:00:00'); const w = (d.getDay() + 6) % 7; return addDias(s, -w); };
+let M = {}, P = {}, prios = [], tipoDia = null;
+
+function toast(t){ const e = $('#toast'); e.textContent = t; e.classList.add('on'); setTimeout(() => e.classList.remove('on'), 1600); }
+function ring(pct, color, size = 56){
+  const r = size/2 - 6, c = 2*Math.PI*r, p = Math.max(0, Math.min(1, pct));
+  return `<svg class="ring" width="${size}" height="${size}"><circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="#2c2c2e" stroke-width="7"/>
+  <circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="${color}" stroke-width="7" stroke-linecap="round" stroke-dasharray="${c*p} ${c}" ${p === 0 ? 'opacity="0"' : ''} transform="rotate(-90 ${size/2} ${size/2})"/></svg>`;
+}
+const val = (f, k) => M[f]?.[k]?.valor ?? null;
+const ultimo = k => { const fs = Object.keys(M).sort().reverse(); for (const f of fs) if (M[f][k]?.valor != null) return {fecha: f, ...M[f][k]}; return null; };
+
+async function guardar(clave, valor, fecha = hoyStr()){
+  const {error} = await sb.from('metricas').upsert({fecha, clave, valor, fuente: 'app', actualizado: new Date().toISOString()});
+  if (error) return toast('No se ha guardado');
+  (M[fecha] ||= {})[clave] = {valor}; pintar(); toast('Guardado');
+}
+
+async function cargar(){
+  const desde = addDias(hoyStr(), -60);
+  const [m, p, pr] = await Promise.all([
+    sb.from('metricas').select('fecha,clave,valor,texto').gte('fecha', desde),
+    sb.from('paneles').select('clave,datos'),
+    sb.from('prioridades').select('*').eq('fecha', hoyStr()).order('id'),
+  ]);
+  if (m.error) { toast('Sin acceso a los datos'); return; }
+  M = {}; for (const r of m.data) (M[r.fecha] ||= {})[r.clave] = r;
+  P = {}; for (const r of p.data || []) P[r.clave] = r.datos;
+  prios = pr.data || [];
+  pintar();
+}
+
+function pintar(){
+  const hoy = hoyStr(), ahora = new Date();
+  const h = Number(ahora.toLocaleString('es-ES', {timeZone: tz, hour: '2-digit', hour12: false}));
+  $('#fecha').textContent = ahora.toLocaleDateString('es-ES', {timeZone: tz, weekday: 'long', day: 'numeric', month: 'long'});
+  $('#saludo').textContent = h < 6 ? 'A dormir, Alex' : h < 14 ? 'Buenos días, Alex' : h < 21 ? 'Buenas tardes, Alex' : 'Buenas noches, Alex';
+
+  // Prioridades
+  $('#prios').innerHTML = prios.length ? prios.map(p => `<div class="check ${p.hecho ? 'ok' : ''}" data-id="${p.id}"><b></b><span>${p.texto.replace(/</g,'&lt;')}</span></div>`).join('')
+    : '<div class="muted">Aún no hay prioridades para hoy.</div>';
+  $('#add-prio').disabled = prios.length >= 3; $('#nueva-prio').disabled = prios.length >= 3;
+
+  // Foco
+  const f = P.foco || {mejores: [], despiste: []};
+  const enRango = r => { const [a, b] = r.split('–').map(x => parseInt(x)); return h >= a && h < b; };
+  const ahoraBueno = f.mejores.some(enRango), ahoraMalo = f.despiste.some(enRango);
+  $('#foco').innerHTML = `<p class="${ahoraBueno ? 'hora-on' : ''}" style="font-weight:600">${h >= 0 && h < 8 ? '🌙 Hora de dormir. Mañana a las 10:00, a tope.' : ahoraBueno ? '⚡ Estás en tu mejor hora: lo difícil, ahora.' : ahoraMalo ? '⚠️ Franja de despiste: agrupa lo personal y no abras terminales nuevas.' : 'Franja normal: tareas medias.'}</p>
+    <p class="tiny" style="margin-top:8px">Mejores: ${f.mejores.join(' · ')}<br>Despiste: ${f.despiste.join(' · ')}</p>`;
+
+  // Entreno
+  const g = P.gym || {};
+  if (!tipoDia) tipoDia = g.hecha_hoy ? 'entreno' : (val(hoy, 'tipo_dia') === 0 ? 'descanso' : 'entreno');
+  document.querySelectorAll('#tipo-dia button').forEach(b => b.classList.toggle('act', b.dataset.t === tipoDia));
+  const pe = $('#pill-entreno');
+  pe.textContent = g.hecha_hoy ? 'Hecho ✓' : tipoDia === 'entreno' ? 'Pendiente' : 'Descanso';
+  pe.className = 'pill ' + (g.hecha_hoy ? 'on' : '');
+  $('#entreno').innerHTML = tipoDia === 'descanso' ? '<p class="muted">Día de descanso: camina tus 10.000 pasos y come con menos hidratos.</p>'
+    : `<p style="font-weight:600;margin-bottom:6px">Sesión ${g.sesion_hoy || '—'} · ${g.titulo || ''}</p><div class="lista">${(g.ejercicios || []).map(e => `<div class="ej"><span>${e.nombre}</span><span class="tiny">${e.series}× · ${e.reps}</span>${e.ultima ? `<small>Última (${e.ultima.fecha}): ${e.ultima.series}${e.ultima.siguiente ? ' → ' + e.ultima.siguiente : ''}</small>` : ''}</div>`).join('')}</div>`;
+
+  // Comidas
+  const cm = (P.comidas || {})[tipoDia] || [];
+  $('#comidas').innerHTML = cm.map(c => `<div><p style="font-weight:600">${c.nombre}</p><p class="muted" style="font-size:15px">${c.detalle}</p></div>`).join('') || '<div class="muted">Sin plan cargado.</div>';
+
+  // Pasos
+  const ps = val(hoy, 'pasos');
+  $('#pasos-hoy').textContent = fmt(ps); $('#bar-pasos').style.width = Math.min(100, (ps || 0) / 100) + '%';
+  $('#pill-pasos').textContent = ps >= 10000 ? 'Cumplido ✓' : 'Faltan ' + fmt(10000 - (ps || 0));
+  $('#pill-pasos').className = 'pill ' + (ps >= 10000 ? 'on' : '');
+
+  // Anoche
+  const sh = M[hoy]?.sueno_horas, sc = val(hoy, 'sueno_cumple');
+  $('#anoche').innerHTML = sh ? `<div class="fila"><div><p class="big">${sh.texto}</p><p class="tiny">${String(sh.valor).replace('.', ',')} h sin actividad en Claude</p></div><span class="pill ${sc ? 'on' : 'off'}">${sc ? 'A tiempo ✓' : 'Tarde'}</span></div>`
+    : '<p class="muted">Todavía no hay datos de anoche: se calculan al primer uso de Claude por la mañana.</p>';
+  $('#sync').textContent = P.sync ? 'Datos del Mac actualizados: ' + new Date(P.sync.hora).toLocaleString('es-ES', {timeZone: tz, day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'}) : '';
+
+  // ===== METAS =====
+  const fin = new Date('2027-01-31T23:59:00'), dias = Math.ceil((fin - ahora) / 864e5);
+  $('#dias-quedan').textContent = `quedan ${dias} días`;
+
+  // Dinero (valor guardado el día 1 de cada mes)
+  const mes = hoy.slice(0, 8) + '01', ing = val(mes, 'ingresos_mes');
+  $('#ingresos').textContent = ing == null ? '—' : fmt(ing) + ' €';
+  const nombreMes = ahora.toLocaleDateString('es-ES', {month: 'long', timeZone: tz});
+  $('#ingresos-mes').textContent = ing == null ? `Apunta lo que llevas en ${nombreMes}` : `de 5.000 € en ${nombreMes} · ${Math.round(ing / 50)} %`;
+  $('#ring-dinero').innerHTML = ring((ing || 0) / 5000, 'var(--acento)', 64);
+
+  // Físico: semana de lunes a domingo
+  const lu = lunes(hoy), semana = [...Array(7)].map((_, i) => addDias(lu, i));
+  const ent = semana.filter(d => val(d, 'entreno')).length, pas = semana.filter(d => val(d, 'pasos') >= 10000).length;
+  $('#entrenos-sem').textContent = `${ent}/5`; $('#pasos-sem').textContent = `${pas}/7`;
+  $('#ring-entrenos').innerHTML = ring(ent / 5, 'var(--naranja)'); $('#ring-pasos').innerHTML = ring(pas / 7, '#ffcc66');
+  const cumplida = ent >= 5 && pas >= 7;
+  $('#pill-semana').textContent = cumplida ? 'Cumplida ✓' : 'En curso'; $('#pill-semana').className = 'pill ' + (cumplida ? 'on' : '');
+  let racha = 0; for (let w = 1; w < 9; w++) { const l = addDias(lu, -7 * w), s = [...Array(7)].map((_, i) => addDias(l, i));
+    if (s.filter(d => val(d, 'entreno')).length >= 5 && s.filter(d => val(d, 'pasos') >= 10000).length >= 7) racha++; else break; }
+  $('#racha').textContent = `Racha: ${racha} ${racha === 1 ? 'semana cumplida' : 'semanas cumplidas'} seguidas.`;
+
+  const fz = (P.gym || {}).fuerza || {};
+  const medias = Object.values(fz).filter(x => x.pct != null).map(x => x.pct);
+  const media = medias.length ? medias.reduce((a, b) => a + b, 0) / medias.length : 0;
+  $('#pill-fuerza').textContent = (media >= 0 ? '+' : '') + media.toFixed(1).replace('.', ',') + ' %';
+  $('#fuerza').innerHTML = Object.values(fz).map(x => `<div><div class="fila"><span>${x.nombre}</span><span class="tiny">${x.base ? `${String(x.actual).replace('.', ',')} kg · ${x.pct >= 0 ? '+' : ''}${String(x.pct).replace('.', ',')} %` : 'sin marca aún'}</span></div>
+    <div class="barra"><i style="width:${x.pct ? Math.min(100, x.pct / 20 * 100) : 0}%;background:var(--naranja)"></i></div></div>`).join('');
+
+  // Sueño: últimos 7 días
+  const ult = [...Array(7)].map((_, i) => addDias(hoy, i - 6));
+  const nc = ult.filter(d => val(d, 'sueno_cumple') === 1).length, nd = ult.filter(d => val(d, 'sueno_cumple') != null).length;
+  $('#sueno-n').textContent = nd ? `${nc}/${nd}` : '—';
+  $('#sueno-puntos').innerHTML = ult.map(d => { const v = val(d, 'sueno_cumple'), dd = new Date(d + 'T12:00').toLocaleDateString('es-ES', {weekday: 'narrow'});
+    return `<i class="${v === 1 ? 'ok' : v === 0 ? 'ko' : ''}">${dd}</i>`; }).join('');
+
+  // Marca personal
+  const vs = semana.reduce((a, d) => a + (val(d, 'videos') || 0), 0);
+  $('#videos-sem').textContent = `${vs}/10`; $('#bar-videos').style.width = Math.min(100, vs * 10) + '%';
+  const md = ultimo('mediana_visitas'), sg = ultimo('seguidores');
+  $('#mediana').textContent = fmt(md?.valor); $('#bar-mediana').style.width = Math.min(100, (md?.valor || 0) / 10) + '%';
+  $('#seguidores').textContent = fmt(sg?.valor); $('#bar-seg').style.width = Math.min(100, (sg?.valor || 0) / 50) + '%';
+}
+
+// Eventos
+document.querySelectorAll('.tabbar button').forEach(b => b.onclick = () => {
+  if (b.dataset.p) return toast(b.dataset.p + ': muy pronto');
+  document.querySelectorAll('.tabbar button').forEach(x => x.classList.toggle('act', x === b));
+  document.querySelectorAll('.vista').forEach(v => v.classList.toggle('act', v.id === 'v-' + b.dataset.v));
+  scrollTo(0, 0);
+});
+document.querySelectorAll('#tipo-dia button').forEach(b => b.onclick = () => { tipoDia = b.dataset.t; guardar('tipo_dia', tipoDia === 'entreno' ? 1 : 0); });
+document.querySelectorAll('[data-guardar]').forEach(b => b.onclick = () => {
+  const k = b.dataset.guardar, inp = $('#in-' + (k === 'mediana_visitas' ? 'mediana' : k)), v = parseFloat(inp.value);
+  if (isNaN(v)) return toast('Escribe un número');
+  inp.value = '';
+  if (k === 'ingresos') guardar('ingresos_mes', v, hoyStr().slice(0, 8) + '01'); else guardar(k, v);
+});
+$('#mas-video').onclick = () => guardar('videos', (val(hoyStr(), 'videos') || 0) + 1);
+$('#add-prio').onclick = async () => {
+  const t = $('#nueva-prio').value.trim(); if (!t || prios.length >= 3) return;
+  const {data, error} = await sb.from('prioridades').insert({texto: t, fecha: hoyStr()}).select().single();
+  if (error) return toast('No se ha guardado');
+  prios.push(data); $('#nueva-prio').value = ''; pintar();
+};
+$('#nueva-prio').onkeydown = e => { if (e.key === 'Enter') $('#add-prio').click(); };
+$('#prios').onclick = async e => {
+  const el = e.target.closest('.check'); if (!el) return;
+  const p = prios.find(x => x.id == el.dataset.id); p.hecho = !p.hecho; pintar();
+  await sb.from('prioridades').update({hecho: p.hecho}).eq('id', p.id);
+};
+
+// Sesión
+async function entrar(crear){
+  $('#err').textContent = '';
+  const email = $('#email').value.trim(), password = $('#pass').value;
+  if (!email || password.length < 8) return $('#err').textContent = 'Email y contraseña de 8 caracteres o más.';
+  const r = crear ? await sb.auth.signUp({email, password}) : await sb.auth.signInWithPassword({email, password});
+  if (r.error) return $('#err').textContent = r.error.message.includes('confirm') ? 'Confirma primero el email que te ha llegado y vuelve a entrar.' : 'No se ha podido entrar: revisa email y contraseña.';
+  if (crear && !r.data.session) return $('#err').textContent = 'Te ha llegado un email: confírmalo y vuelve aquí a entrar.';
+}
+$('#entrar').onclick = () => entrar(false); $('#crear').onclick = () => entrar(true);
+$('#pass').onkeydown = e => { if (e.key === 'Enter') entrar(false); };
+$('#salir').onclick = () => sb.auth.signOut();
+
+sb.auth.onAuthStateChange((_, s) => {
+  const dentro = !!s;
+  $('#login').hidden = dentro; $('#app').hidden = !dentro; $('#tabbar').hidden = !dentro;
+  if (dentro) cargar();
+});
+document.addEventListener('visibilitychange', () => { if (!document.hidden && !$('#app').hidden) cargar(); });
+</script>
+</body>
+</html>
