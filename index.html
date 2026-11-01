@@ -156,6 +156,9 @@ input:focus{border-color:var(--acento)}
     <h2>Comidas</h2>
     <div class="card lista" id="comidas"></div>
 
+    <h2>Súper esta semana</h2>
+    <div class="card" id="super-sem"></div>
+
     <h2>Pasos</h2>
     <div class="card">
       <div class="fila"><div><p class="big" id="pasos-hoy">—</p><p class="tiny">de 10.000 hoy</p></div><span class="pill" id="pill-pasos"></span></div>
@@ -437,7 +440,7 @@ const mesDe = s => s.slice(0, 8) + '01';
 // Vídeos del día: lo publicado según Zernio o lo apuntado a mano, lo que sea mayor
 const vid = d => Math.max(val(d, 'videos') || 0, val(d, 'videos_pub') || 0);
 // Periodos: semana actual, semana pasada, mes actual, mes pasado
-let perCu = 'sem', perCuMes = 'mes', perT = 'sem', perDieta = 'mes', diaDieta = null;
+let gastos = [], perCu = 'sem', perCuMes = 'mes', perT = 'sem', perDieta = 'mes', diaDieta = null;
 function periodo(tipo, hoy = hoyStr()){
   let desde, n;
   if (tipo.startsWith('sem')) { desde = addDias(lunes(hoy), tipo === 'sem' ? 0 : -7); n = 7; }
@@ -478,18 +481,20 @@ async function guardar(clave, valor, fecha = hoyStr()){
 
 async function cargar(){
   const desde = addDias(hoyStr(), -60);
-  const [m, p, pr, mm, cl, pz] = await Promise.all([
+  const [m, p, pr, mm, cl, pz, gs] = await Promise.all([
     sb.from('metricas').select('fecha,clave,valor,texto').gte('fecha', desde),
     sb.from('paneles').select('clave,datos'),
     sb.from('prioridades').select('*').eq('fecha', hoyStr()).order('id'),
     sb.from('metricas').select('fecha,clave,valor,texto').gte('fecha', addMeses(mesDe(hoyStr()), -6)).or('clave.like.ing*,clave.eq.gastos_mes'),
     sb.from('clientes').select('*').order('id'),
     sb.from('piezas').select('*').order('id'),
+    sb.from('gastos').select('*').gte('fecha', addMeses(mesDe(hoyStr()), -2)).order('fecha'),
   ]);
   if (m.error) { toast('Sin acceso a los datos'); return; }
   M = {}; for (const r of [...(mm.data || []), ...m.data]) (M[r.fecha] ||= {})[r.clave] = r;
   clientes = cl.data || [];
   piezas = pz.data || [];
+  gastos = gs.data || [];
   P = {}; for (const r of p.data || []) P[r.clave] = r.datos;
   prios = pr.data || [];
   pintar();
@@ -526,6 +531,17 @@ function pintar(){
   // Comidas
   const cm = (P.comidas || {})[tipoDia] || [];
   $('#comidas').innerHTML = cm.map(c => `<div><p style="font-weight:600">${c.nombre}</p><p class="muted" style="font-size:15px">${c.detalle}</p></div>`).join('') || '<div class="muted">Sin plan cargado.</div>';
+
+  // Súper esta semana (presupuesto 55 €) y comida del mes
+  const TOPE = 55, lu0 = lunes(hoy), su = addDias(lu0, 6);
+  const gSem = gastos.filter(x => x.fecha >= lu0 && x.fecha <= su), sup = gSem.filter(x => x.categoria === 'super').reduce((a, x) => a + Number(x.eur), 0);
+  const fue = gSem.filter(x => x.categoria === 'comida_fuera').reduce((a, x) => a + Number(x.eur), 0);
+  const mesG = gastos.filter(x => x.fecha.slice(0, 7) === hoy.slice(0, 7) && ['super', 'comida_fuera'].includes(x.categoria)).reduce((a, x) => a + Number(x.eur), 0);
+  const e2 = n => new Intl.NumberFormat('es-ES', {minimumFractionDigits: 2, maximumFractionDigits: 2}).format(n) + ' €';
+  $('#super-sem').innerHTML = `<div class="fila"><div><p class="big" style="color:${sup > TOPE ? 'var(--rojo)' : 'var(--tx)'}">${e2(sup)}</p><p class="tiny">de ${TOPE} € · ${sup > TOPE ? 'te has pasado ' + e2(sup - TOPE) : 'te quedan ' + e2(TOPE - sup)}</p></div><span class="pill ${sup > TOPE ? 'off' : 'on'}">${sup > TOPE ? 'Pasado' : 'Bien'}</span></div>
+    <div class="barra"><i style="width:${Math.min(100, sup / TOPE * 100)}%;${sup > TOPE ? 'background:var(--rojo)' : ''}"></i></div>
+    ${gSem.length ? `<div class="lista" style="margin-top:10px">${gSem.slice().reverse().map(x => `<div class="fila"><div><p style="font-size:15px">${esc(x.concepto)}</p><p class="tiny">${new Date(x.fecha + 'T12:00').toLocaleDateString('es-ES', {weekday: 'short', day: 'numeric'})}${x.fuente === 'ticket' ? ' · ticket' : ''}${x.categoria !== 'super' ? ' · ' + {comida_fuera: 'comida fuera', transporte: 'transporte', casa: 'casa', ocio: 'ocio', salud: 'salud', otros: 'otros'}[x.categoria] : ''}</p></div><span style="font-weight:600">${e2(Number(x.eur))}</span></div>`).join('')}</div>` : '<p class="muted" style="margin-top:8px">Mándame el ticket por Telegram y lo apunto.</p>'}
+    <p class="tiny" style="margin-top:8px">${fue ? `Comida fuera esta semana: ${e2(fue)} (ya no hay comidas libres). ` : ''}Comida en ${new Date(hoy + 'T12:00').toLocaleDateString('es-ES', {month: 'long'})}: ${e2(mesG)}.</p>`;
 
   // Pasos
   const ps = val(hoy, 'pasos');
