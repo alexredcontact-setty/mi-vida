@@ -644,6 +644,12 @@ function pintarNegocio(hoy, ahora){
         <span class="pill">Impuestos ${euros(porTipo('impuesto'))}</span><span class="pill">Cuotas ${euros(porTipo('cuota'))}</span><span class="pill">Herramientas ${euros(porTipo('herramientas'))}</span></div>
       <div class="lista" style="margin-top:6px">${pend.map((x, i) => `<div class="fila"><div><p style="font-weight:${i ? 400 : 600}">${esc(x.q)}</p>${x.det ? `<p class="tiny">${esc(x.det)}</p>` : ''}</div>
         <span style="display:flex;gap:10px;align-items:baseline"><span class="tiny">${fch(x.vence)}</span><span style="font-weight:600;min-width:76px;text-align:right">${eur2(x.eur)}</span></span></div>`).join('')}</div>
+      ${R.saldo ? (() => { const falta = tot - R.saldo.eur, pc = (R.por_cobrar || []).reduce((a, x) => a + x.eur, 0);
+        return `<div style="border-top:1px solid #2c2c2e;margin-top:8px;padding-top:8px">
+          <div class="fila"><span>En la cuenta (${fch(R.saldo.fecha)})</span><span style="font-weight:600">${eur2(R.saldo.eur)}</span></div>
+          <div class="fila"><span style="color:${falta > 0 ? 'var(--rojo)' : 'var(--verde)'};font-weight:600">${falta > 0 ? 'Te faltan' : 'Te sobran'}</span><span style="font-weight:600;color:${falta > 0 ? 'var(--rojo)' : 'var(--verde)'}">${eur2(Math.abs(falta))}</span></div>
+          ${(R.por_cobrar || []).map(x => `<div class="fila"><span class="tiny">${esc(x.q)} · ${new Date(x.fecha + '-01T12:00').toLocaleDateString('es-ES', {month: 'long'})}</span><span class="tiny">+${eur2(x.eur)}</span></div>`).join('')}
+          ${pc && falta > 0 ? `<p class="tiny" style="margin-top:4px">Con eso, faltarían ${eur2(Math.max(0, falta - pc))}.</p>` : ''}</div>`; })() : ''}
       ${R.nota ? `<p class="tiny" style="margin-top:10px">${esc(R.nota)}</p>` : ''}`;
 
   // Últimos 6 meses
