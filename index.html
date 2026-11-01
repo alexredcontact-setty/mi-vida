@@ -87,6 +87,18 @@ input:focus{border-color:var(--acento)}
 .meses em{font-style:normal;font-size:11px;color:var(--tx2)} .meses small{font-size:11px;color:var(--tx3)}
 .cli{cursor:pointer} .cli .ed{display:none;margin-top:10px} .cli.abierto .ed{display:block}
 .ed .num{margin-top:8px}
+.sem7{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-top:12px}
+.sem7>div{background:var(--card2);border-radius:10px;padding:8px 0;text-align:center;font-size:12px;color:var(--tx3)}
+.sem7 b{display:block;font-size:13px;color:var(--tx2);margin-bottom:2px}
+.sem7 .ent{background:var(--acento-suave);color:var(--acento)} .sem7 .ent b{color:var(--acento)}
+.sem7 .hoy{outline:2px solid var(--tx3)}
+.noche{display:grid;grid-template-columns:28px 1fr 74px;gap:8px;align-items:center;font-size:12px;color:var(--tx3);margin-top:7px}
+.noche .pista{position:relative;height:12px;border-radius:6px;background:var(--card2)}
+.noche .zona{position:absolute;top:0;bottom:0;background:rgba(48,209,88,.13);border-radius:6px}
+.noche .dormido{position:absolute;top:2px;bottom:2px;border-radius:5px;background:var(--acento)}
+.noche .dormido.ok{background:var(--verde)}
+.spark{width:100%;height:38px;margin-top:6px}
+
 </style>
 </head>
 <body>
@@ -212,6 +224,42 @@ input:focus{border-color:var(--acento)}
     <div class="card"><div class="lista" id="c-yt"></div></div>
   </section>
 
+  <!-- CUERPO -->
+  <section class="vista" id="v-cuerpo">
+    <p class="lbl" id="cu-sub"></p>
+    <h1>Cuerpo</h1>
+
+    <h2>Esta semana</h2>
+    <div class="card">
+      <div class="fila"><div><p class="big" id="cu-ent">0/5</p><p class="tiny">entrenos · ritmo 3 + descanso + 2 + descanso</p></div><span class="pill" id="cu-pill"></span></div>
+      <div class="sem7" id="cu-sem"></div>
+      <p class="tiny" style="margin-top:10px" id="cu-sig"></p>
+    </div>
+
+    <h2>Fuerza</h2>
+    <div id="cu-fuerza"></div>
+
+    <h2>Pasos</h2>
+    <div class="card">
+      <div class="fila"><div><p class="big" id="cu-pasos-media">—</p><p class="tiny">de media en 14 días · meta 10.000</p></div></div>
+      <div class="meses" id="cu-pasos" style="height:120px;gap:4px"></div>
+    </div>
+
+    <h2>Sueño</h2>
+    <div class="card">
+      <div class="fila"><div><p class="big" id="cu-sueno">—</p><p class="tiny">horas de media · zona verde = 00:00 a 08:00</p></div></div>
+      <div id="cu-noches" style="margin-top:6px"></div>
+    </div>
+
+    <h2>Fotos de progreso</h2>
+    <div class="card">
+      <div class="fila"><div><p style="font-weight:600" id="cu-fotos">—</p><p class="tiny" id="cu-fotos-sub">cada 2 semanas, para tu entrenador</p></div><button class="btn2" id="cu-fotos-btn">Hechas hoy</button></div>
+    </div>
+
+    <h2>Últimos entrenos</h2>
+    <div class="card lista" id="cu-hist"></div>
+  </section>
+
   <!-- METAS -->
   <section class="vista" id="v-metas">
     <p class="lbl">Hasta el 31 de enero · <span id="dias-quedan"></span></p>
@@ -269,7 +317,7 @@ input:focus{border-color:var(--acento)}
   <button class="act" data-v="hoy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>Hoy</button>
   <button data-v="negocio"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 20h18M6 16v-5M11 16V7M16 16v-8M21 16V4"/></svg>Negocio</button>
   <button data-v="contenido"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M10 9l5 3-5 3z"/></svg>Contenido</button>
-  <button class="pronto" data-p="Cuerpo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 7v10M18 7v10M3 10v4M21 10v4M6 12h12"/></svg>Cuerpo</button>
+  <button data-v="cuerpo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 7v10M18 7v10M3 10v4M21 10v4M6 12h12"/></svg>Cuerpo</button>
   <button class="pronto" data-p="Tiempo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Tiempo</button>
   <button data-v="metas"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5"/></svg>Metas</button>
 </nav>
@@ -426,6 +474,7 @@ function pintar(){
 
   pintarNegocio(hoy, ahora);
   pintarContenido(hoy);
+  pintarCuerpo(hoy);
 }
 
 function pintarNegocio(hoy, ahora){
@@ -529,6 +578,68 @@ function pintarContenido(hoy){
     || '<div class="muted">Se rellena con la próxima sincronización del Mac.</div>';
 }
 
+function spark(puntos, meta){
+  if (!puntos.length) return '';
+  const w = 300, h = 38, ys = [...puntos.map(p => p.e1rm), meta], lo = Math.min(...ys) * 0.97, hi = Math.max(...ys) * 1.01;
+  const x = i => puntos.length === 1 ? w / 2 : 6 + i * (w - 12) / (puntos.length - 1), y = v => h - 4 - (v - lo) / (hi - lo) * (h - 8);
+  return `<svg class="spark" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
+    <line x1="0" x2="${w}" y1="${y(meta)}" y2="${y(meta)}" stroke="#636366" stroke-dasharray="4 4" stroke-width="1"/>
+    <polyline fill="none" stroke="var(--naranja)" stroke-width="2.5" stroke-linejoin="round" points="${puntos.map((p, i) => x(i) + ',' + y(p.e1rm)).join(' ')}"/>
+    ${puntos.map((p, i) => `<circle cx="${x(i)}" cy="${y(p.e1rm)}" r="3.5" fill="var(--naranja)"/>`).join('')}</svg>`;
+}
+
+function pintarCuerpo(hoy){
+  const g = P.gym || {}, lu = lunes(hoy), semana = [...Array(7)].map((_, i) => addDias(lu, i));
+  $('#cu-sub').textContent = g.ultima ? `Último entreno: ${new Date(g.ultima.fecha + 'T12:00').toLocaleDateString('es-ES', {weekday: 'long', day: 'numeric'})} · sesión ${g.ultima.sesion}` : 'Sin entrenos apuntados';
+
+  // Semana
+  const ent = semana.filter(d => val(d, 'entreno')).length;
+  $('#cu-ent').textContent = `${ent}/5`;
+  $('#cu-pill').textContent = ent >= 5 ? 'Cumplida ✓' : `Faltan ${5 - ent}`; $('#cu-pill').className = 'pill ' + (ent >= 5 ? 'on' : '');
+  $('#cu-sem').innerHTML = semana.map(d => { const e = M[d]?.entreno, desc = val(d, 'tipo_dia') === 0, ps = val(d, 'pasos');
+    const dd = new Date(d + 'T12:00').toLocaleDateString('es-ES', {weekday: 'narrow'});
+    return `<div class="${e ? 'ent' : ''} ${d === hoy ? 'hoy' : ''}"><b>${dd}</b>${e ? (e.texto || '✓').replace('Sesión ', 'S') : desc ? 'desc.' : d > hoy ? '' : '—'}${ps ? `<br>${(ps / 1000).toFixed(1).replace('.', ',')}k` : ''}</div>`; }).join('');
+  $('#cu-sig').textContent = g.hecha_hoy ? 'Hoy ya has entrenado. Mañana toca: sesión ' + ((g.sesion_hoy % 6) + 1) + '.' : `Próximo entreno: sesión ${g.sesion_hoy || '—'}${g.titulo ? ' · ' + g.titulo : ''}.`;
+
+  // Fuerza
+  const fz = g.fuerza || {};
+  $('#cu-fuerza').innerHTML = Object.values(fz).map(x => { const meta = x.base ? x.base * 1.2 : null;
+    return `<div class="card"><div class="fila"><span style="font-weight:600">${x.nombre}</span><span class="pill ${x.pct > 0 ? 'on' : ''}">${x.base ? (x.pct >= 0 ? '+' : '') + String(x.pct).replace('.', ',') + ' %' : 'sin marca'}</span></div>
+      ${x.base ? `<p class="tiny" style="margin-top:4px">Ahora ${String(x.actual).replace('.', ',')} kg · empezaste en ${String(x.base).replace('.', ',')} · meta ${meta.toFixed(1).replace('.', ',')} kg (línea)</p>${spark(x.historial, meta)}
+      <div class="barra"><i style="width:${Math.max(0, Math.min(100, x.pct / 20 * 100))}%;background:var(--naranja)"></i></div>`
+      : '<p class="tiny" style="margin-top:4px">Aparece cuando lo hagas por primera vez con el registro.</p>'}</div>`; }).join('')
+    + '<p class="tiny" style="margin:-4px 4px 0">Fuerza = tu mejor serie del día pasada a 1 repetición máxima estimada (peso × reps).</p>';
+
+  // Pasos 14 días
+  const dias = [...Array(14)].map((_, i) => addDias(hoy, i - 13)), pv = dias.map(d => val(d, 'pasos'));
+  const con = pv.filter(v => v != null);
+  $('#cu-pasos-media').textContent = con.length ? fmt(Math.round(con.reduce((a, b) => a + b, 0) / con.length)) : '—';
+  const tope = Math.max(11000, ...con);
+  $('#cu-pasos').innerHTML = `<p class="linea" style="bottom:calc((100% - 34px) * ${10000 / tope} + 19px)"><span>10k</span></p>` + dias.map((d, i) => { const v = pv[i];
+    return `<div><em>${v == null ? '' : Math.round(v / 1000)}</em><b class="${v >= 10000 ? 'ok' : d === hoy ? 'act' : ''}" style="height:calc((100% - 34px) * ${(v || 0) / tope})"></b><small>${new Date(d + 'T12:00').toLocaleDateString('es-ES', {weekday: 'narrow'})}</small></div>`; }).join('');
+
+  // Sueño 14 noches (eje de 21:00 a 13:00)
+  const pos = t => { const [h, m] = t.split(':').map(Number); return ((h * 60 + m - 21 * 60 + 1440) % 1440) / 960 * 100; };
+  const noches = dias.slice().reverse().map(d => ({d, s: M[d]?.sueno_horas, ok: val(d, 'sueno_cumple')})).filter(n => n.s?.texto);
+  $('#cu-sueno').textContent = noches.length ? (noches.reduce((a, n) => a + Number(n.s.valor), 0) / noches.length).toFixed(1).replace('.', ',') + ' h' : '—';
+  $('#cu-noches').innerHTML = noches.length ? `<div class="noche"><span></span><div class="fila tiny" style="font-size:10px"><span>21h</span><span>00h</span><span>04h</span><span>08h</span><span>13h</span></div><span></span></div>`
+    + noches.map(n => { const [a, b] = n.s.texto.split('–'), x1 = pos(a), x2 = pos(b);
+      return `<div class="noche"><span>${new Date(n.d + 'T12:00').toLocaleDateString('es-ES', {weekday: 'short'}).replace('.', '')}</span>
+        <div class="pista"><i class="zona" style="left:18.75%;width:50%"></i><i class="dormido ${n.ok ? 'ok' : ''}" style="left:${x1}%;width:${Math.max(1, x2 - x1)}%"></i></div><span>${n.s.texto.replace('–', '-')}</span></div>`; }).join('')
+    : '<p class="muted">Aún no hay noches medidas.</p>';
+
+  // Fotos
+  const uf = ultimo('fotos');
+  if (uf) { const prox = addDias(uf.fecha, 14), faltan = Math.round((new Date(prox + 'T12:00') - new Date(hoy + 'T12:00')) / 864e5);
+    $('#cu-fotos').textContent = faltan <= 0 ? '📸 Tocan fotos' : `Próximas fotos en ${faltan} ${faltan === 1 ? 'día' : 'días'}`;
+    $('#cu-fotos-sub').textContent = 'Últimas: ' + new Date(uf.fecha + 'T12:00').toLocaleDateString('es-ES', {day: 'numeric', month: 'long'}) + ' · cada 2 semanas';
+  } else { $('#cu-fotos').textContent = 'Sin fotos apuntadas'; }
+
+  // Últimos entrenos
+  $('#cu-hist').innerHTML = (g.sesiones || []).map(s => `<div class="fila"><div><p style="font-weight:600">Sesión ${s.sesion} · ${esc(s.titulo)}</p></div><span class="tiny">${new Date(s.fecha + 'T12:00').toLocaleDateString('es-ES', {weekday: 'short', day: 'numeric', month: 'short'})}</span></div>`).join('')
+    || '<div class="muted">Se rellena con tu registro del gym.</div>';
+}
+
 async function guardarFuente(clave, valor){
   const mes = mesDe(hoyStr()), ahora = new Date().toISOString();
   (M[mes] ||= {});
@@ -597,6 +708,8 @@ $('#cl-add').onclick = async () => {
   clientes.push(data); ['#cl-nombre', '#cl-cuota', '#cl-parte'].forEach(s => $(s).value = ''); pintar(); toast('Cliente añadido');
 };
 $('#mas-video').onclick = () => guardar('videos', (val(hoyStr(), 'videos') || 0) + 1);
+// Cuerpo
+$('#cu-fotos-btn').onclick = () => guardar('fotos', 1);
 // Contenido
 $('#c-mas').onclick = () => guardar('videos', (val(hoyStr(), 'videos') || 0) + 1);
 $('#c-menos').onclick = () => { const v = val(hoyStr(), 'videos') || 0; if (v > 0) guardar('videos', v - 1); };
