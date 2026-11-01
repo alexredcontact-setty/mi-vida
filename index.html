@@ -201,6 +201,9 @@ input:focus{border-color:var(--acento)}
     <h2>Fran · lo que llevas</h2>
     <div class="card" id="neg-fran"></div>
 
+    <h2>Cuenta de impuestos</h2>
+    <div class="card" id="neg-reserva"></div>
+
     <h2>Últimos 6 meses</h2>
     <div class="card">
       <div class="meses" id="neg-meses"></div>
@@ -619,7 +622,7 @@ function pintarNegocio(hoy, ahora){
   // Fran: desglose real de Stripe
   const pf = P.fran, fm = pf?.meses || [];
   const fmes = fm.find(x => x.mes === mes.slice(0, 7)), fant = fm.find(x => x.mes === addMeses(mes, -1).slice(0, 7));
-  const eur2 = n => new Intl.NumberFormat('es-ES', {minimumFractionDigits: 2, maximumFractionDigits: 2}).format(n) + ' €';
+  const eur2 = n => new Intl.NumberFormat('es-ES', {useGrouping: 'always', minimumFractionDigits: 2, maximumFractionDigits: 2}).format(n) + ' €';
   const filaF = (a, b, c) => `<div class="fila" style="padding:5px 0"><span>${a}</span><span style="display:flex;gap:12px"><span class="tiny">${c || ''}</span><span style="font-weight:600;min-width:84px;text-align:right">${b}</span></span></div>`;
   const desglose = x => Object.entries(x.mensuales).sort((a, b) => b[0] - a[0]).map(([p, v]) => filaF(`Mensuales a ${p.replace('.', ',')} €`, eur2(v.eur), v.n + ' ×')).join('')
     + (x.anuales_nuevos.n ? filaF('Anuales nuevos', eur2(x.anuales_nuevos.eur), x.anuales_nuevos.n + ' ×') : '')
@@ -630,6 +633,18 @@ function pintarNegocio(hoy, ahora){
       <div style="margin-top:10px">${desglose(fmes)}</div>
       <div style="border-top:1px solid #2c2c2e;margin-top:6px;padding-top:6px">${filaF('Cobrado con IVA', eur2(fmes.bruto_con_iva))}${filaF('Sin IVA', eur2(fmes.sin_iva))}${fmes.comisiones_stripe != null ? filaF('− Comisiones de Stripe', eur2(fmes.comisiones_stripe)) : ''}</div>
       <p class="tiny" style="margin-top:8px">${fant ? `El mes pasado: ${eur2(fant.parte_alex_10)} para ti. ` : ''}${pf.facturado_hasta ? `<b style="color:var(--tx)">Te llega en ${pf.se_cobra ? new Date(pf.se_cobra + '-01T12:00').toLocaleDateString('es-ES', {month: 'long'}) : 'la próxima factura'}: ${eur2(fm.filter(x => x.mes > pf.facturado_hasta).reduce((a, x) => a + x.parte_alex_10, 0))}</b> + IVA (acumulado desde ${new Date(addMeses(pf.facturado_hasta + '-01', 1) + 'T12:00').toLocaleDateString('es-ES', {month: 'long'})}). ` : ''} Actualizado ${new Date(pf.generado).toLocaleString('es-ES', {timeZone: tz, day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'})}.</p>`;
+
+  // Cuenta de impuestos: lo que tiene que estar apartado (solo lo que aún no se ha pagado)
+  const R = P.reserva, pend = (R?.partidas || []).filter(x => x.vence >= hoy).sort((a, b) => a.vence < b.vence ? -1 : 1);
+  const fch = d => new Date(d + 'T12:00').toLocaleDateString('es-ES', {day: 'numeric', month: 'short'});
+  const tot = pend.reduce((a, x) => a + x.eur, 0), porTipo = t => pend.filter(x => x.tipo === t).reduce((a, x) => a + x.eur, 0);
+  $('#neg-reserva').innerHTML = !pend.length ? '<p class="muted">Nada pendiente.</p>'
+    : `<div class="fila"><div><p class="big">${eur2(tot)}</p><p class="tiny">deberías tener apartado hoy</p></div></div>
+      <div class="fila" style="margin:10px 0 4px;gap:8px;flex-wrap:wrap;justify-content:flex-start">
+        <span class="pill">Impuestos ${euros(porTipo('impuesto'))}</span><span class="pill">Cuotas ${euros(porTipo('cuota'))}</span><span class="pill">Herramientas ${euros(porTipo('herramientas'))}</span></div>
+      <div class="lista" style="margin-top:6px">${pend.map((x, i) => `<div class="fila"><div><p style="font-weight:${i ? 400 : 600}">${esc(x.q)}</p>${x.det ? `<p class="tiny">${esc(x.det)}</p>` : ''}</div>
+        <span style="display:flex;gap:10px;align-items:baseline"><span class="tiny">${fch(x.vence)}</span><span style="font-weight:600;min-width:76px;text-align:right">${eur2(x.eur)}</span></span></div>`).join('')}</div>
+      ${R.nota ? `<p class="tiny" style="margin-top:10px">${esc(R.nota)}</p>` : ''}`;
 
   // Últimos 6 meses
   const meses = [...Array(6)].map((_, i) => addMeses(mes, i - 5)), vals = meses.map(neto);
