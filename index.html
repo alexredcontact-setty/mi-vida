@@ -98,6 +98,14 @@ input:focus{border-color:var(--acento)}
 .noche .dormido{position:absolute;top:2px;bottom:2px;border-radius:5px;background:var(--acento)}
 .noche .dormido.ok{background:var(--verde)}
 .spark{width:100%;height:38px;margin-top:6px}
+.apilada{display:flex;height:14px;border-radius:7px;overflow:hidden;background:var(--card2);margin-top:12px}
+.apilada i{display:block;height:100%}
+.leyenda{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:10px;font-size:13px;color:var(--tx2)}
+.leyenda span::before{content:"";display:inline-block;width:9px;height:9px;border-radius:3px;background:var(--c);margin-right:6px}
+.horas24{display:flex;align-items:flex-end;gap:2px;height:90px;margin-top:12px}
+.horas24 i{flex:1;border-radius:3px 3px 1px 1px;background:#3a3a3c;min-height:2px}
+.horas24 i.bien{background:var(--acento)} .horas24 i.mal{background:var(--rojo)} .horas24 i.ahora{outline:2px solid var(--tx)}
+
 
 </style>
 </head>
@@ -260,6 +268,39 @@ input:focus{border-color:var(--acento)}
     <div class="card lista" id="cu-hist"></div>
   </section>
 
+  <!-- TIEMPO -->
+  <section class="vista" id="v-tiempo">
+    <p class="lbl">Con Claude · se actualiza cada hora</p>
+    <h1>Tiempo</h1>
+
+    <h2>Hoy</h2>
+    <div class="card">
+      <div class="fila"><div><p class="big" id="t-hoy">—</p><p class="tiny" id="t-hoy-sub">de trabajo real</p></div></div>
+      <div class="apilada" id="t-hoy-bar"></div>
+      <div class="leyenda" id="t-hoy-ley"></div>
+    </div>
+
+    <h2>Esta semana</h2>
+    <div class="card">
+      <div class="fila"><div><p class="big" id="t-sem">—</p><p class="tiny">horas reales de lunes a hoy</p></div></div>
+      <div class="meses" id="t-sem-bars" style="height:120px"></div>
+    </div>
+
+    <h2>En qué se va (14 días)</h2>
+    <div class="card">
+      <div class="lista" id="t-areas"></div>
+      <p class="tiny" style="margin-top:10px" id="t-paralelo"></p>
+    </div>
+
+    <h2>Tus horas</h2>
+    <div class="card">
+      <p class="tiny">Minutos de trabajo de media en cada hora del día (14 días). Naranja = tus mejores horas · rojo = franjas de despiste.</p>
+      <div class="horas24" id="t-24"></div>
+      <div class="fila tiny" style="margin-top:4px;font-size:11px"><span>0h</span><span>6h</span><span>12h</span><span>18h</span><span>23h</span></div>
+      <p style="margin-top:12px;font-weight:600" id="t-consejo"></p>
+    </div>
+  </section>
+
   <!-- METAS -->
   <section class="vista" id="v-metas">
     <p class="lbl">Hasta el 31 de enero · <span id="dias-quedan"></span></p>
@@ -318,7 +359,7 @@ input:focus{border-color:var(--acento)}
   <button data-v="negocio"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 20h18M6 16v-5M11 16V7M16 16v-8M21 16V4"/></svg>Negocio</button>
   <button data-v="contenido"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M10 9l5 3-5 3z"/></svg>Contenido</button>
   <button data-v="cuerpo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 7v10M18 7v10M3 10v4M21 10v4M6 12h12"/></svg>Cuerpo</button>
-  <button class="pronto" data-p="Tiempo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Tiempo</button>
+  <button data-v="tiempo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Tiempo</button>
   <button data-v="metas"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5"/></svg>Metas</button>
 </nav>
 <div class="toast" id="toast"></div>
@@ -475,6 +516,7 @@ function pintar(){
   pintarNegocio(hoy, ahora);
   pintarContenido(hoy);
   pintarCuerpo(hoy);
+  pintarTiempo(hoy);
 }
 
 function pintarNegocio(hoy, ahora){
@@ -638,6 +680,43 @@ function pintarCuerpo(hoy){
   // Últimos entrenos
   $('#cu-hist').innerHTML = (g.sesiones || []).map(s => `<div class="fila"><div><p style="font-weight:600">Sesión ${s.sesion} · ${esc(s.titulo)}</p></div><span class="tiny">${new Date(s.fecha + 'T12:00').toLocaleDateString('es-ES', {weekday: 'short', day: 'numeric', month: 'short'})}</span></div>`).join('')
     || '<div class="muted">Se rellena con tu registro del gym.</div>';
+}
+
+const AREA_COLOR = {'Contenido': 'var(--acento)', 'Clientes': 'var(--verde)', 'Dividendo': 'var(--azul)', 'Fitness': '#ff6482',
+  'Marca personal': 'var(--morado)', 'Consultoría': 'var(--amarillo)', 'Herramientas': '#8e8e93', 'Mi Vida': '#64d2ff'};
+const horasTxt = h => h == null ? '—' : h < 1 ? Math.round(h * 60) + ' min' : h.toFixed(1).replace('.', ',') + ' h';
+
+function pintarTiempo(hoy){
+  const T = P.tiempo || {areas: {}, por_hora: []}, A = T.areas || {};
+  // Hoy
+  const hh = val(hoy, 'horas_claude'), ah = A[hoy] || {}, sumaHoy = Object.values(ah).reduce((a, b) => a + b, 0);
+  $('#t-hoy').textContent = horasTxt(hh);
+  const orden = o => Object.entries(o).sort((a, b) => b[1] - a[1]);
+  $('#t-hoy-bar').innerHTML = orden(ah).map(([k, v]) => `<i style="width:${v / sumaHoy * 100}%;background:${AREA_COLOR[k] || '#8e8e93'}"></i>`).join('');
+  $('#t-hoy-ley').innerHTML = orden(ah).map(([k, v]) => `<span style="--c:${AREA_COLOR[k] || '#8e8e93'}">${k} ${horasTxt(v)}</span>`).join('') || '<span class="muted">Sin actividad todavía.</span>';
+
+  // Semana
+  const lu = lunes(hoy), semana = [...Array(7)].map((_, i) => addDias(lu, i)), hs = semana.map(d => d <= hoy ? val(d, 'horas_claude') : null);
+  $('#t-sem').textContent = horasTxt(hs.reduce((a, b) => a + (b || 0), 0));
+  const tope = Math.max(8, ...hs.map(v => v || 0));
+  $('#t-sem-bars').innerHTML = semana.map((d, i) => { const v = hs[i];
+    return `<div><em>${v == null ? '' : v.toFixed(1).replace('.', ',')}</em><b class="${d === hoy ? 'act' : ''}" style="height:calc((100% - 34px) * ${(v || 0) / tope});${d !== hoy && v ? 'background:#48484a' : ''}"></b><small>${new Date(d + 'T12:00').toLocaleDateString('es-ES', {weekday: 'narrow'})}</small></div>`; }).join('');
+
+  // Áreas 14 días
+  const tot = {}; Object.values(A).forEach(o => Object.entries(o).forEach(([k, v]) => tot[k] = (tot[k] || 0) + v));
+  const suma = Object.values(tot).reduce((a, b) => a + b, 0);
+  $('#t-areas').innerHTML = orden(tot).map(([k, v]) => `<div><div class="fila"><span style="font-weight:600">${k}</span><span class="tiny">${horasTxt(v)} · ${Math.round(v / suma * 100)} %</span></div>
+    <div class="barra" style="height:6px;margin-top:6px"><i style="width:${v / suma * 100}%;background:${AREA_COLOR[k] || '#8e8e93'}"></i></div></div>`).join('') || '<div class="muted">Se rellena con la próxima sincronización.</div>';
+  const dias14 = [...Array(14)].map((_, i) => addDias(hoy, -i)), real = dias14.reduce((a, d) => a + (val(d, 'horas_claude') || 0), 0);
+  $('#t-paralelo').textContent = suma && real ? `Sumando terminales en paralelo: ${Math.round(suma)} h. En reloj real: ${Math.round(real)} h (×${(suma / real).toFixed(1).replace('.', ',')}).` : '';
+
+  // 24 horas
+  const f = P.foco || {mejores: [], despiste: []}, h = Number(new Date().toLocaleString('es-ES', {timeZone: tz, hour: '2-digit', hour12: false}));
+  const en = (lista, x) => lista.some(r => { const [a, b] = r.split('–').map(y => parseInt(y)); return x >= a && x < b; });
+  const ph = T.por_hora || [], max = Math.max(1, ...ph);
+  $('#t-24').innerHTML = [...Array(24)].map((_, i) => `<i class="${en(f.mejores, i) ? 'bien' : en(f.despiste, i) ? 'mal' : ''} ${i === h ? 'ahora' : ''}" style="height:${(ph[i] || 0) / max * 100}%" title="${i}h: ${Math.round(ph[i] || 0)} min"></i>`).join('');
+  const top = ph.map((m, i) => [m, i]).sort((a, b) => b[0] - a[0]).slice(0, 3).map(x => x[1] + 'h').join(', ');
+  $('#t-consejo').textContent = ph.length ? (h < 8 ? '🌙 A esta hora deberías estar durmiendo.' : en(f.mejores, h) ? '⚡ Ahora es una de tus mejores horas: lo difícil, ya.' : en(f.despiste, h) ? '⚠️ Ahora sueles despistarte: tareas cortas o personales.' : `Donde más trabajas: ${top}.`) : '';
 }
 
 async function guardarFuente(clave, valor){
