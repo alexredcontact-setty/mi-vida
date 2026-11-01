@@ -37,7 +37,7 @@ h2{font:600 22px/1.2 -apple-system,"SF Pro Display",system-ui;letter-spacing:-.0
 .barra{height:8px;border-radius:8px;background:var(--card2);overflow:hidden;margin-top:10px}
 .barra>i{display:block;height:100%;border-radius:8px;background:var(--acento);transition:width .6s}
 .lista>div{padding:12px 0;border-top:1px solid var(--line)} .lista>div:first-child{border-top:0;padding-top:4px}
-.pill{font-size:12px;font-weight:600;padding:4px 10px;border-radius:99px;background:var(--card2);color:var(--tx2)}
+.pill{white-space:nowrap;flex-shrink:0;font-size:12px;font-weight:600;padding:4px 10px;border-radius:99px;background:var(--card2);color:var(--tx2)}
 .pill.on{background:var(--acento-suave);color:var(--acento)}
 .pill.off{background:rgba(255,69,58,.15);color:var(--rojo)}
 button{font:inherit;border:0;cursor:pointer}
@@ -225,8 +225,11 @@ input:focus{border-color:var(--acento)}
     <div class="card">
       <div class="fila"><div><p class="big" id="c-mediana">—</p><p class="tiny">visitas típicas por vídeo · meta 1.000</p></div></div>
       <div class="barra"><i id="c-bar-mediana" style="width:0;background:var(--azul)"></i></div>
-      <div class="num"><input id="c-in-mediana" type="number" inputmode="numeric" placeholder="Visitas típicas"><button class="btn2" id="c-g-mediana">Guardar</button></div>
+      <p class="tiny" style="margin-top:8px">Mediana de tus 10 últimos vídeos (TikTok + Instagram), sacada de Zernio cada hora.</p>
     </div>
+
+    <h2>Tus últimos vídeos</h2>
+    <div class="card lista" id="c-posts"></div>
 
     <h2>YouTube de Setty y SYA</h2>
     <div class="card"><div class="lista" id="c-yt"></div></div>
@@ -247,9 +250,11 @@ input:focus{border-color:var(--acento)}
     <h2>Fuerza</h2>
     <div id="cu-fuerza"></div>
 
+    <div class="seg" id="cu-per" style="margin-top:24px"><button class="act" data-p="sem">Esta semana</button><button data-p="sem-1">Semana pasada</button></div>
+
     <h2>Pasos</h2>
     <div class="card">
-      <div class="fila"><div><p class="big" id="cu-pasos-media">—</p><p class="tiny">de media en 14 días · meta 10.000</p></div></div>
+      <div class="fila"><div><p class="big" id="cu-pasos-media">—</p><p class="tiny" id="cu-pasos-sub">de media · meta 10.000</p></div></div>
       <div class="meses" id="cu-pasos" style="height:120px;gap:4px"></div>
     </div>
 
@@ -258,6 +263,10 @@ input:focus{border-color:var(--acento)}
       <div class="fila"><div><p class="big" id="cu-sueno">—</p><p class="tiny">horas de media · zona verde = 00:00 a 08:00</p></div></div>
       <div id="cu-noches" style="margin-top:6px"></div>
     </div>
+
+    <h2 id="cu-mes-tit">Resumen del mes</h2>
+    <div class="seg" id="cu-mes-per" style="margin-bottom:10px"><button class="act" data-p="mes">Este mes</button><button data-p="mes-1">Mes pasado</button></div>
+    <div class="card lista" id="cu-mes"></div>
 
     <h2>Fotos de progreso</h2>
     <div class="card">
@@ -286,7 +295,8 @@ input:focus{border-color:var(--acento)}
       <div class="meses" id="t-sem-bars" style="height:120px"></div>
     </div>
 
-    <h2>En qué se va (14 días)</h2>
+    <h2>En qué se va</h2>
+    <div class="seg" id="t-per" style="margin-bottom:10px"><button class="act" data-p="sem">Esta semana</button><button data-p="sem-1">Semana pasada</button><button data-p="mes">Mes</button><button data-p="mes-1">Mes pasado</button></div>
     <div class="card">
       <div class="lista" id="t-areas"></div>
       <p class="tiny" style="margin-top:10px" id="t-paralelo"></p>
@@ -294,11 +304,14 @@ input:focus{border-color:var(--acento)}
 
     <h2>Tus horas</h2>
     <div class="card">
-      <p class="tiny">Minutos de trabajo de media en cada hora del día (14 días). Naranja = tus mejores horas · rojo = franjas de despiste.</p>
+      <p class="tiny" id="t-24-sub">Minutos de trabajo de media en cada hora del día. Naranja = tus mejores horas · rojo = franjas de despiste.</p>
       <div class="horas24" id="t-24"></div>
       <div class="fila tiny" style="margin-top:4px;font-size:11px"><span>0h</span><span>6h</span><span>12h</span><span>18h</span><span>23h</span></div>
       <p style="margin-top:12px;font-weight:600" id="t-consejo"></p>
     </div>
+
+    <h2>Resumen del mes</h2>
+    <div class="card lista" id="t-mes"></div>
   </section>
 
   <!-- METAS -->
@@ -344,12 +357,12 @@ input:focus{border-color:var(--acento)}
     <div class="card">
       <div class="fila"><div><p class="big" id="mediana">—</p><p class="tiny">visitas típicas por vídeo · meta 1.000</p></div></div>
       <div class="barra"><i id="bar-mediana" style="width:0;background:var(--azul)"></i></div>
-      <div class="num"><input id="in-mediana" type="number" inputmode="numeric" placeholder="Visitas típicas"><button class="btn2" data-guardar="mediana_visitas">Guardar</button></div>
+
     </div>
     <div class="card">
       <div class="fila"><div><p class="big" id="seguidores">—</p><p class="tiny">seguidores TikTok + IG + YouTube · meta 5.000</p></div></div>
       <div class="barra"><i id="bar-seg" style="width:0;background:var(--morado)"></i></div>
-      <div class="num"><input id="in-seguidores" type="number" inputmode="numeric" placeholder="Seguidores totales"><button class="btn2" data-guardar="seguidores">Guardar</button></div>
+      
     </div>
   </section>
 </main>
@@ -382,6 +395,18 @@ const FUENTES = [
 ];
 const GASTO = {k: 'gastos_mes', n: 'Gastos', d: 'Herramientas, cuota de autónomo…'};
 const mesDe = s => s.slice(0, 8) + '01';
+// Vídeos del día: lo publicado según Zernio o lo apuntado a mano, lo que sea mayor
+const vid = d => Math.max(val(d, 'videos') || 0, val(d, 'videos_pub') || 0);
+// Periodos: semana actual, semana pasada, mes actual, mes pasado
+let perCu = 'sem', perCuMes = 'mes', perT = 'sem';
+function periodo(tipo, hoy = hoyStr()){
+  let desde, n;
+  if (tipo.startsWith('sem')) { desde = addDias(lunes(hoy), tipo === 'sem' ? 0 : -7); n = 7; }
+  else { desde = tipo === 'mes' ? mesDe(hoy) : addMeses(mesDe(hoy), -1); n = Math.round((new Date(addMeses(desde, 1) + 'T12:00') - new Date(desde + 'T12:00')) / 864e5); }
+  const dias = [...Array(n)].map((_, i) => addDias(desde, i));
+  return {dias, pasados: dias.filter(d => d <= hoy), nombre: tipo.startsWith('mes') ? new Date(desde + 'T12:00').toLocaleDateString('es-ES', {month: 'long'}) : ''};
+}
+const media = a => a.length ? a.reduce((x, y) => x + y, 0) / a.length : null;
 const addMeses = (s, n) => { const d = new Date(s + 'T12:00:00'); d.setDate(1); d.setMonth(d.getMonth() + n); return d.toLocaleDateString('sv-SE'); };
 const euros = n => n == null ? '—' : fmt(Math.round(n)) + ' €';
 const esc = t => String(t ?? '').replace(/[&<>"]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]));
@@ -507,7 +532,7 @@ function pintar(){
     return `<i class="${v === 1 ? 'ok' : v === 0 ? 'ko' : ''}">${dd}</i>`; }).join('');
 
   // Marca personal
-  const vs = semana.reduce((a, d) => a + (val(d, 'videos') || 0), 0);
+  const vs = semana.reduce((a, d) => a + vid(d), 0);
   $('#videos-sem').textContent = `${vs}/10`; $('#bar-videos').style.width = Math.min(100, vs * 10) + '%';
   const md = ultimo('mediana_visitas'), sg = ultimo('seguidores');
   $('#mediana').textContent = fmt(md?.valor); $('#bar-mediana').style.width = Math.min(100, (md?.valor || 0) / 10) + '%';
@@ -580,9 +605,9 @@ const MARCA_COLOR = {Alex: 'var(--acento)', Setty: 'var(--azul)', SYA: 'var(--am
 function pintarContenido(hoy){
   const lu = lunes(hoy), semana = [...Array(7)].map((_, i) => addDias(lu, i));
   $('#c-semana').textContent = 'Semana del ' + new Date(lu + 'T12:00').toLocaleDateString('es-ES', {day: 'numeric', month: 'long'});
-  const vs = semana.reduce((a, d) => a + (val(d, 'videos') || 0), 0);
+  const vs = semana.reduce((a, d) => a + vid(d), 0);
   $('#c-videos').textContent = `${vs}/10`;
-  $('#c-dias').innerHTML = semana.map(d => { const v = val(d, 'videos') || 0, dd = new Date(d + 'T12:00').toLocaleDateString('es-ES', {weekday: 'narrow'});
+  $('#c-dias').innerHTML = semana.map(d => { const v = vid(d), dd = new Date(d + 'T12:00').toLocaleDateString('es-ES', {weekday: 'narrow'});
     return `<i class="${v ? 'ok' : d < hoy && d >= '2026-11-01' ? 'ko' : ''}">${v ? v : dd}</i>`; }).join('');
   const quedan = semana.filter(d => d >= hoy).length, faltan = Math.max(0, 10 - vs);
   $('#c-ritmo').textContent = faltan === 0 ? 'Semana cumplida ✓' : `Te faltan ${faltan} en ${quedan} ${quedan === 1 ? 'día' : 'días'}: unos ${Math.ceil(faltan / Math.max(1, quedan))} al día.`;
@@ -612,6 +637,12 @@ function pintarContenido(hoy){
   }
   const md = ultimo('mediana_visitas');
   $('#c-mediana').textContent = fmt(md?.valor); $('#c-bar-mediana').style.width = Math.min(100, (md?.valor || 0) / 10) + '%';
+
+  // Tus últimos vídeos (Zernio)
+  const RED = {instagram: 'IG', tiktok: 'TikTok', youtube: 'YT'};
+  $('#c-posts').innerHTML = (P.posts || []).slice(0, 8).map(p => `<div><div class="fila"><p style="font-weight:600;font-size:15px;min-width:0">${esc(p.texto)}</p><span class="pill ${p.visitas >= 1000 ? 'on' : ''}">${fmt(p.visitas)}</span></div>
+    <p class="tiny">${new Date(p.fecha + 'T12:00').toLocaleDateString('es-ES', {day: 'numeric', month: 'short'})} · ${Object.entries(p.redes).map(([r, x]) => `<a href="${esc(x.url)}" target="_blank" rel="noopener" style="color:var(--tx2)">${RED[r] || r} ${fmt(x.visitas)}</a>`).join(' · ')}</p></div>`).join('')
+    || '<div class="muted">Se rellena con la próxima sincronización.</div>';
 
   // YouTube Setty y SYA
   const yt = P.youtube || {};
@@ -652,23 +683,36 @@ function pintarCuerpo(hoy){
       : '<p class="tiny" style="margin-top:4px">Aparece cuando lo hagas por primera vez con el registro.</p>'}</div>`; }).join('')
     + '<p class="tiny" style="margin:-4px 4px 0">Fuerza = tu mejor serie del día pasada a 1 repetición máxima estimada (peso × reps).</p>';
 
-  // Pasos 14 días
-  const dias = [...Array(14)].map((_, i) => addDias(hoy, i - 13)), pv = dias.map(d => val(d, 'pasos'));
+  // Pasos de la semana elegida
+  const dias = periodo(perCu, hoy).dias, pv = dias.map(d => val(d, 'pasos'));
   const con = pv.filter(v => v != null);
-  $('#cu-pasos-media').textContent = con.length ? fmt(Math.round(con.reduce((a, b) => a + b, 0) / con.length)) : '—';
+  $('#cu-pasos-media').textContent = con.length ? fmt(Math.round(media(con))) : '—';
+  $('#cu-pasos-sub').textContent = `de media · ${pv.filter(v => v >= 10000).length}/7 días con 10.000`;
   const tope = Math.max(11000, ...con);
   $('#cu-pasos').innerHTML = `<p class="linea" style="bottom:calc((100% - 34px) * ${10000 / tope} + 19px)"><span>10k</span></p>` + dias.map((d, i) => { const v = pv[i];
     return `<div><em>${v == null ? '' : Math.round(v / 1000)}</em><b class="${v >= 10000 ? 'ok' : d === hoy ? 'act' : ''}" style="height:calc((100% - 34px) * ${(v || 0) / tope})"></b><small>${new Date(d + 'T12:00').toLocaleDateString('es-ES', {weekday: 'narrow'})}</small></div>`; }).join('');
 
-  // Sueño 14 noches (eje de 21:00 a 13:00)
+  // Sueño de la semana elegida (eje de 21:00 a 13:00)
   const pos = t => { const [h, m] = t.split(':').map(Number); return ((h * 60 + m - 21 * 60 + 1440) % 1440) / 960 * 100; };
-  const noches = dias.slice().reverse().map(d => ({d, s: M[d]?.sueno_horas, ok: val(d, 'sueno_cumple')})).filter(n => n.s?.texto);
+  const noches = dias.map(d => ({d, s: M[d]?.sueno_horas, ok: val(d, 'sueno_cumple')})).filter(n => n.s?.texto);
   $('#cu-sueno').textContent = noches.length ? (noches.reduce((a, n) => a + Number(n.s.valor), 0) / noches.length).toFixed(1).replace('.', ',') + ' h' : '—';
   $('#cu-noches').innerHTML = noches.length ? `<div class="noche"><span></span><div class="fila tiny" style="font-size:10px"><span>21h</span><span>00h</span><span>04h</span><span>08h</span><span>13h</span></div><span></span></div>`
     + noches.map(n => { const [a, b] = n.s.texto.split('–'), x1 = pos(a), x2 = pos(b);
       return `<div class="noche"><span>${new Date(n.d + 'T12:00').toLocaleDateString('es-ES', {weekday: 'short'}).replace('.', '')}</span>
         <div class="pista"><i class="zona" style="left:18.75%;width:50%"></i><i class="dormido ${n.ok ? 'ok' : ''}" style="left:${x1}%;width:${Math.max(1, x2 - x1)}%"></i></div><span>${n.s.texto.replace('–', '-')}</span></div>`; }).join('')
     : '<p class="muted">Aún no hay noches medidas.</p>';
+
+  // Resumen del mes
+  const pm = periodo(perCuMes, hoy), dm = pm.pasados;
+  $('#cu-mes-tit').textContent = 'Resumen de ' + pm.nombre;
+  const entM = dm.filter(d => val(d, 'entreno')).length, pasM = dm.map(d => val(d, 'pasos')).filter(v => v != null);
+  const suM = dm.map(d => M[d]?.sueno_horas?.valor).filter(v => v != null).map(Number), atM = dm.filter(d => val(d, 'sueno_cumple') === 1).length, conS = dm.filter(d => val(d, 'sueno_cumple') != null).length;
+  let semC = 0, semT = 0; for (let l = lunes(pm.dias[0]); l <= pm.dias[pm.dias.length - 1] && l <= hoy; l = addDias(l, 7)) { const w = [...Array(7)].map((_, i) => addDias(l, i)); if (w[6] > hoy) continue; semT++;
+    if (w.filter(d => val(d, 'entreno')).length >= 5 && w.filter(d => val(d, 'pasos') >= 10000).length >= 7) semC++; }
+  const fila = (a, b) => `<div class="fila"><span>${a}</span><span style="font-weight:600">${b}</span></div>`;
+  $('#cu-mes').innerHTML = fila('Entrenos', `${entM}`) + fila('Semanas cumplidas', semT ? `${semC}/${semT}` : '—')
+    + fila('Pasos de media', pasM.length ? fmt(Math.round(media(pasM))) : '—') + fila('Días con 10.000 pasos', pasM.length ? `${pasM.filter(v => v >= 10000).length}/${pasM.length}` : '—')
+    + fila('Sueño de media', suM.length ? media(suM).toFixed(1).replace('.', ',') + ' h' : '—') + fila('Noches a tiempo', conS ? `${atM}/${conS}` : '—');
 
   // Fotos
   const uf = ultimo('fotos');
@@ -702,21 +746,36 @@ function pintarTiempo(hoy){
   $('#t-sem-bars').innerHTML = semana.map((d, i) => { const v = hs[i];
     return `<div><em>${v == null ? '' : v.toFixed(1).replace('.', ',')}</em><b class="${d === hoy ? 'act' : ''}" style="height:calc((100% - 34px) * ${(v || 0) / tope});${d !== hoy && v ? 'background:#48484a' : ''}"></b><small>${new Date(d + 'T12:00').toLocaleDateString('es-ES', {weekday: 'narrow'})}</small></div>`; }).join('');
 
-  // Áreas 14 días
-  const tot = {}; Object.values(A).forEach(o => Object.entries(o).forEach(([k, v]) => tot[k] = (tot[k] || 0) + v));
+  // Áreas del periodo elegido
+  const per = periodo(perT, hoy), tot = {};
+  per.pasados.forEach(d => Object.entries(A[d] || {}).forEach(([k, v]) => tot[k] = (tot[k] || 0) + v));
   const suma = Object.values(tot).reduce((a, b) => a + b, 0);
   $('#t-areas').innerHTML = orden(tot).map(([k, v]) => `<div><div class="fila"><span style="font-weight:600">${k}</span><span class="tiny">${horasTxt(v)} · ${Math.round(v / suma * 100)} %</span></div>
     <div class="barra" style="height:6px;margin-top:6px"><i style="width:${v / suma * 100}%;background:${AREA_COLOR[k] || '#8e8e93'}"></i></div></div>`).join('') || '<div class="muted">Se rellena con la próxima sincronización.</div>';
-  const dias14 = [...Array(14)].map((_, i) => addDias(hoy, -i)), real = dias14.reduce((a, d) => a + (val(d, 'horas_claude') || 0), 0);
+  const real = per.pasados.reduce((a, d) => a + (val(d, 'horas_claude') || 0), 0);
   $('#t-paralelo').textContent = suma && real ? `Sumando terminales en paralelo: ${Math.round(suma)} h. En reloj real: ${Math.round(real)} h (×${(suma / real).toFixed(1).replace('.', ',')}).` : '';
 
   // 24 horas
   const f = P.foco || {mejores: [], despiste: []}, h = Number(new Date().toLocaleString('es-ES', {timeZone: tz, hour: '2-digit', hour12: false}));
   const en = (lista, x) => lista.some(r => { const [a, b] = r.split('–').map(y => parseInt(y)); return x >= a && x < b; });
-  const ph = T.por_hora || [], max = Math.max(1, ...ph);
+  const PH = Array.isArray(T.por_hora) ? {} : (T.por_hora || {}), diasH = per.pasados.filter(d => PH[d]);
+  const ph = [...Array(24)].map((_, i) => diasH.length ? diasH.reduce((a, d) => a + PH[d][i], 0) / diasH.length : 0), max = Math.max(1, ...ph);
+  $('#t-24-sub').textContent = `Minutos de trabajo de media en cada hora (${perT === 'sem' ? 'esta semana' : perT === 'sem-1' ? 'semana pasada' : per.nombre}). Naranja = tus mejores horas · rojo = franjas de despiste.`;
   $('#t-24').innerHTML = [...Array(24)].map((_, i) => `<i class="${en(f.mejores, i) ? 'bien' : en(f.despiste, i) ? 'mal' : ''} ${i === h ? 'ahora' : ''}" style="height:${(ph[i] || 0) / max * 100}%" title="${i}h: ${Math.round(ph[i] || 0)} min"></i>`).join('');
   const top = ph.map((m, i) => [m, i]).sort((a, b) => b[0] - a[0]).slice(0, 3).map(x => x[1] + 'h').join(', ');
-  $('#t-consejo').textContent = ph.length ? (h < 8 ? '🌙 A esta hora deberías estar durmiendo.' : en(f.mejores, h) ? '⚡ Ahora es una de tus mejores horas: lo difícil, ya.' : en(f.despiste, h) ? '⚠️ Ahora sueles despistarte: tareas cortas o personales.' : `Donde más trabajas: ${top}.`) : '';
+  $('#t-consejo').textContent = diasH.length ? (h < 8 ? '🌙 A esta hora deberías estar durmiendo.' : en(f.mejores, h) ? '⚡ Ahora es una de tus mejores horas: lo difícil, ya.' : en(f.despiste, h) ? '⚠️ Ahora sueles despistarte: tareas cortas o personales.' : `Donde más trabajas: ${top}.`) : '';
+
+  // Resumen del mes (actual y anterior, para comparar)
+  const ms = periodo('mes', hoy), ma = periodo('mes-1', hoy);
+  const horasDe = p => p.pasados.reduce((a, d) => a + (val(d, 'horas_claude') || 0), 0);
+  const diasDe = p => p.pasados.filter(d => (val(d, 'horas_claude') || 0) > 0.5).length;
+  const areaTop = p => { const t = {}; p.pasados.forEach(d => Object.entries(A[d] || {}).forEach(([k, v]) => t[k] = (t[k] || 0) + v)); const o = orden(t)[0]; return o ? o[0] : '—'; };
+  const col = (a, b, c, cab) => `<div class="fila"><span${cab ? ' class="tiny"' : ''}>${a}</span><span style="display:flex;gap:14px"><span class="tiny" style="min-width:64px;text-align:right">${c}</span><span style="font-weight:600;min-width:64px;text-align:right">${b}</span></span></div>`;
+  $('#t-mes').innerHTML = col('', ms.nombre, ma.nombre, 1)
+    + col('Horas reales', horasTxt(horasDe(ms)), horasTxt(horasDe(ma)))
+    + col('Días trabajados', diasDe(ms), diasDe(ma))
+    + col('Media por día', diasDe(ms) ? horasTxt(horasDe(ms) / diasDe(ms)) : '—', diasDe(ma) ? horasTxt(horasDe(ma) / diasDe(ma)) : '—')
+    + col('Área principal', areaTop(ms), areaTop(ma));
 }
 
 async function guardarFuente(clave, valor){
@@ -786,12 +845,12 @@ $('#cl-add').onclick = async () => {
   if (error) return toast('No se ha guardado');
   clientes.push(data); ['#cl-nombre', '#cl-cuota', '#cl-parte'].forEach(s => $(s).value = ''); pintar(); toast('Cliente añadido');
 };
-$('#mas-video').onclick = () => guardar('videos', (val(hoyStr(), 'videos') || 0) + 1);
+$('#mas-video').onclick = () => guardar('videos', vid(hoyStr()) + 1);
 // Cuerpo
 $('#cu-fotos-btn').onclick = () => guardar('fotos', 1);
 // Contenido
-$('#c-mas').onclick = () => guardar('videos', (val(hoyStr(), 'videos') || 0) + 1);
-$('#c-menos').onclick = () => { const v = val(hoyStr(), 'videos') || 0; if (v > 0) guardar('videos', v - 1); };
+$('#c-mas').onclick = () => guardar('videos', vid(hoyStr()) + 1);
+$('#c-menos').onclick = () => { const v = val(hoyStr(), 'videos') || 0; if (v > 0) guardar('videos', v - 1); else toast('Los publicados en Zernio no se pueden quitar'); };
 $('#c-filtro').onclick = e => { if (e.target.tagName !== 'BUTTON') return; filtroMarca = e.target.dataset.m;
   $('#c-filtro').querySelectorAll('button').forEach(b => b.classList.toggle('act', b === e.target)); pintar(); };
 $('#c-add').onclick = async () => {
@@ -816,7 +875,7 @@ $('#c-piezas').onclick = async e => {
   const {error} = await sb.from('piezas').update(cambios).eq('id', p.id);
   if (error) return toast('No se ha guardado');
   Object.assign(p, cambios);
-  if (cambios.estado === 'publicado' && p.marca === 'Alex') guardar('videos', (val(hoyStr(), 'videos') || 0) + 1); else pintar();
+  if (cambios.estado === 'publicado' && p.marca === 'Alex') guardar('videos', vid(hoyStr()) + 1); else pintar();
 };
 $('#c-redes').addEventListener('change', async e => {
   const k = e.target.dataset.red; if (!k) return;
@@ -828,7 +887,12 @@ $('#c-redes').addEventListener('change', async e => {
   M[hoy].seguidores = {valor: total}; pintar(); toast('Guardado');
 });
 $('#c-redes').addEventListener('keydown', e => { if (e.key === 'Enter') e.target.blur(); });
-$('#c-g-mediana').onclick = () => { const v = parseFloat($('#c-in-mediana').value); if (isNaN(v)) return toast('Escribe un número'); $('#c-in-mediana').value = ''; guardar('mediana_visitas', v); };
+document.querySelectorAll('#cu-per,#cu-mes-per,#t-per').forEach(sg => sg.onclick = e => {
+  if (e.target.tagName !== 'BUTTON') return;
+  sg.querySelectorAll('button').forEach(b => b.classList.toggle('act', b === e.target));
+  if (sg.id === 'cu-per') perCu = e.target.dataset.p; else if (sg.id === 'cu-mes-per') perCuMes = e.target.dataset.p; else perT = e.target.dataset.p;
+  pintar();
+});
 $('#add-prio').onclick = async () => {
   const t = $('#nueva-prio').value.trim(); if (!t || prios.length >= 3) return;
   const {data, error} = await sb.from('prioridades').insert({texto: t, fecha: hoyStr()}).select().single();
