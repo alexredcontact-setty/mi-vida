@@ -651,8 +651,8 @@ function pintarNegocio(hoy, ahora){
     const linea = (a, b, c, neg) => `<div class="fila" style="padding:4px 0"><span>${a}${c ? `<br><span class="tiny">${c}</span>` : ''}</span><span style="font-weight:600;white-space:nowrap${neg ? ';color:var(--tx2)' : ''}">${neg ? '− ' : ''}${eur2(b)}</span></div>`;
     const col = v => v >= 0 ? 'var(--verde)' : 'var(--rojo)';
     $('#neg-caja').innerHTML = `<div class="fila"><div><p class="big" style="color:${col(saldo)}">${saldo >= 0 ? '+' : '− '}${eur2(Math.abs(saldo))}</p>
-        <p class="tiny">${saldo >= 0 ? 'te sobran' : 'te faltan'} para llegar a final de enero sin pagar alquiler</p></div></div>
-      <p class="tiny" style="margin-top:6px">Con alquiler (${euros(C.alquiler_mes)}/mes): <b style="color:${col(conAlq)}">${conAlq >= 0 ? '+' : '− '}${eur2(Math.abs(conAlq))}</b></p>
+        <p class="tiny">${saldo >= 0 ? 'te sobran' : 'te faltan'} para vivir hasta final de enero (${(Math.abs(saldo) / Math.max(1, mesesRest)).toFixed(0)} €/mes)</p></div></div>
+      <p class="tiny" style="margin-top:6px">Alquiler (${euros(C.alquiler_mes)}/mes): solo sale de lo que sobre. ${saldo >= C.alquiler_mes ? `<b style="color:var(--verde)">Con lo que sobra cubres ${Math.floor(saldo / C.alquiler_mes)} ${Math.floor(saldo / C.alquiler_mes) === 1 ? 'mes' : 'meses'}.</b>` : saldo > 0 ? `Te faltan ${eur2(C.alquiler_mes - saldo)} para cubrir un mes.` : 'Ahora mismo no hay para alquiler.'}</p>
       <p class="lbl" style="margin-top:14px">Lo que tienes y lo que entra</p>
       ${ctas.map(x => linea(x.q, x.eur, 'saldo a ' + fch(C.cuentas.fecha))).join('')}
       ${ents.map(x => linea(x.q, x.eur, 'previsto · ' + fch(x.fecha))).join('')}
