@@ -201,6 +201,9 @@ input:focus{border-color:var(--acento)}
     <h2>Fran · lo que llevas</h2>
     <div class="card" id="neg-fran"></div>
 
+    <h2>Dinero hasta enero</h2>
+    <div class="card" id="neg-caja"></div>
+
     <h2>Cuenta de impuestos</h2>
     <div class="card" id="neg-reserva"></div>
 
@@ -633,6 +636,32 @@ function pintarNegocio(hoy, ahora){
       <div style="margin-top:10px">${desglose(fmes)}</div>
       <div style="border-top:1px solid #2c2c2e;margin-top:6px;padding-top:6px">${filaF('Cobrado con IVA', eur2(fmes.bruto_con_iva))}${filaF('Sin IVA', eur2(fmes.sin_iva))}${fmes.comisiones_stripe != null ? filaF('− Comisiones de Stripe', eur2(fmes.comisiones_stripe)) : ''}</div>
       <p class="tiny" style="margin-top:8px">${fant ? `El mes pasado: ${eur2(fant.parte_alex_10)} para ti. ` : ''}${pf.facturado_hasta ? `<b style="color:var(--tx)">Te llega en ${pf.se_cobra ? new Date(pf.se_cobra + '-01T12:00').toLocaleDateString('es-ES', {month: 'long'}) : 'la próxima factura'}: ${eur2(fm.filter(x => x.mes > pf.facturado_hasta).reduce((a, x) => a + x.parte_alex_10, 0))}</b> + IVA (acumulado desde ${new Date(addMeses(pf.facturado_hasta + '-01', 1) + 'T12:00').toLocaleDateString('es-ES', {month: 'long'})}). ` : ''} Actualizado ${new Date(pf.generado).toLocaleString('es-ES', {timeZone: tz, day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'})}.</p>`;
+
+  // Dinero hasta enero: lo que hay + lo que entra − lo que sale
+  const C = P.caja;
+  if (C) {
+    const fch = d => new Date(d + 'T12:00').toLocaleDateString('es-ES', {day: 'numeric', month: 'short'});
+    const mesesRest = (() => { let n = 0; for (let m = mes; m.slice(0, 7) <= C.hasta; m = addMeses(m, 1)) n++; return n; })();
+    const ctas = C.cuentas?.lista || [], enCta = ctas.reduce((a, x) => a + x.eur, 0);
+    const ents = (C.entradas || []).filter(x => x.estado !== 'cobrado');
+    const franAcum = (P.fran?.meses || []).filter(x => P.fran.facturado_hasta && x.mes > P.fran.facturado_hasta).reduce((a, x) => a + x.parte_alex_10, 0);
+    const resPend = (P.reserva?.partidas || []).filter(x => x.vence >= hoy).reduce((a, x) => a + x.eur, 0);
+    const vivir = C.vivir_mes * mesesRest, entra = enCta + ents.reduce((a, x) => a + x.eur, 0) + franAcum, sale = vivir + resPend;
+    const saldo = entra - sale, conAlq = saldo - C.alquiler_mes * mesesRest;
+    const linea = (a, b, c, neg) => `<div class="fila" style="padding:4px 0"><span>${a}${c ? `<br><span class="tiny">${c}</span>` : ''}</span><span style="font-weight:600;white-space:nowrap${neg ? ';color:var(--tx2)' : ''}">${neg ? '− ' : ''}${eur2(b)}</span></div>`;
+    const col = v => v >= 0 ? 'var(--verde)' : 'var(--rojo)';
+    $('#neg-caja').innerHTML = `<div class="fila"><div><p class="big" style="color:${col(saldo)}">${saldo >= 0 ? '+' : '− '}${eur2(Math.abs(saldo))}</p>
+        <p class="tiny">${saldo >= 0 ? 'te sobran' : 'te faltan'} para llegar a final de enero sin pagar alquiler</p></div></div>
+      <p class="tiny" style="margin-top:6px">Con alquiler (${euros(C.alquiler_mes)}/mes): <b style="color:${col(conAlq)}">${conAlq >= 0 ? '+' : '− '}${eur2(Math.abs(conAlq))}</b></p>
+      <p class="lbl" style="margin-top:14px">Lo que tienes y lo que entra</p>
+      ${ctas.map(x => linea(x.q, x.eur, 'saldo a ' + fch(C.cuentas.fecha))).join('')}
+      ${ents.map(x => linea(x.q, x.eur, 'previsto · ' + fch(x.fecha))).join('')}
+      ${franAcum ? linea('Fran (10 %, lo acumulado hasta hoy)', franAcum, 'te llega en enero · sube cada hora') : ''}
+      <p class="lbl" style="margin-top:12px">Lo que sale</p>
+      ${linea(`Vivir ${mesesRest} ${mesesRest === 1 ? 'mes' : 'meses'} (${euros(C.vivir_mes)}/mes)`, vivir, C.vivir_det, 1)}
+      ${linea('Cuenta de impuestos', resPend, 'IVA, IRPF, cuotas y herramientas · detalle abajo', 1)}
+      <p class="tiny" style="margin-top:10px">Para no ir justo: cada proyecto que cierres antes de enero suma aquí.</p>`;
+  }
 
   // Cuenta de impuestos: lo que tiene que estar apartado (solo lo que aún no se ha pagado)
   const R = P.reserva, pend = (R?.partidas || []).filter(x => x.vence >= hoy).sort((a, b) => a.vence < b.vence ? -1 : 1);
