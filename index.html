@@ -158,6 +158,20 @@ input:focus{border-color:var(--acento)}
 
     <h2>Anoche</h2>
     <div class="card" id="anoche"></div>
+
+    <h2>Cierre del día</h2>
+    <div class="card" id="cierre">
+      <p style="font-weight:600;margin-bottom:8px">¿Estás satisfecho con tu día?</p>
+      <div class="seg" id="ci-satisfaccion" style="margin-bottom:14px"><button data-v="1">1</button><button data-v="2">2</button><button data-v="3">3</button><button data-v="4">4</button><button data-v="5">5</button></div>
+      <p style="font-weight:600;margin-bottom:8px">¿Cómo está tu ánimo en general?</p>
+      <div class="seg" id="ci-animo" style="margin-bottom:14px"><button data-v="1">😞</button><button data-v="2">😕</button><button data-v="3">😐</button><button data-v="4">🙂</button><button data-v="5">😄</button></div>
+      <p style="font-weight:600;margin-bottom:8px">¿Cuántas horas dormiste anoche?</p>
+      <div class="num" style="margin-bottom:14px"><input id="ci-dormido" type="number" inputmode="decimal" step="0.5" placeholder="Horas, p. ej. 7,5"><button class="btn2" id="ci-dormido-ok">Guardar</button></div>
+      <p style="font-weight:600;margin-bottom:8px">¿Qué tienes en la cabeza?</p>
+      <textarea id="ci-pensamientos" rows="4" placeholder="Lo que te preocupa, lo que ha ido bien, ideas…" style="width:100%;box-sizing:border-box;display:block;background:var(--card2);color:var(--tx);border:0;border-radius:10px;padding:10px 12px;font:inherit;font-size:16px;resize:vertical"></textarea>
+      <button class="btn2" id="ci-pensamientos-ok" style="margin-top:8px;width:100%">Guardar pensamientos</button>
+      <p class="tiny" id="ci-semana" style="margin-top:12px"></p>
+    </div>
     <p class="tiny" id="sync" style="text-align:center;margin-top:18px"></p>
   </section>
 
@@ -411,10 +425,15 @@ const addMeses = (s, n) => { const d = new Date(s + 'T12:00:00'); d.setDate(1); 
 const euros = n => n == null ? '—' : fmt(Math.round(n)) + ' €';
 const esc = t => String(t ?? '').replace(/[&<>"]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]));
 // Neto del mes: si hay fuentes apuntadas, suma − gastos; si no, el valor antiguo de ingresos_mes
+// Gastos fijos: si un mes no tiene, vale el último mes apuntado (hasta 12 atrás)
+function gastoDe(mes){
+  for (let i = 0; i < 12; i++) { const m = addMeses(mes, -i), r = M[m]?.[GASTO.k]; if (r?.valor != null) return {valor: Number(r.valor), texto: r.texto, mes: m}; }
+  return null;
+}
 function neto(mes){
   const hay = FUENTES.some(f => val(mes, f.k) != null) || val(mes, GASTO.k) != null;
   if (!hay) return val(mes, 'ingresos_mes');
-  return FUENTES.reduce((a, f) => a + (val(mes, f.k) || 0), 0) - (val(mes, GASTO.k) || 0);
+  return FUENTES.reduce((a, f) => a + (val(mes, f.k) || 0), 0) - (gastoDe(mes)?.valor || 0);
 }
 
 function toast(t){ const e = $('#toast'); e.textContent = t; e.classList.add('on'); setTimeout(() => e.classList.remove('on'), 1600); }
@@ -493,6 +512,15 @@ function pintar(){
   const sh = M[hoy]?.sueno_horas, sc = val(hoy, 'sueno_cumple');
   $('#anoche').innerHTML = sh ? `<div class="fila"><div><p class="big">${sh.texto}</p><p class="tiny">${String(sh.valor).replace('.', ',')} h sin actividad en Claude</p></div><span class="pill ${sc ? 'on' : 'off'}">${sc ? 'A tiempo ✓' : 'Tarde'}</span></div>`
     : '<p class="muted">Todavía no hay datos de anoche: se calculan al primer uso de Claude por la mañana.</p>';
+  // Cierre del día
+  for (const k of ['satisfaccion', 'animo']) document.querySelectorAll(`#ci-${k} button`).forEach(b => b.classList.toggle('act', Number(b.dataset.v) === Number(val(hoy, k))));
+  if (document.activeElement !== $('#ci-dormido')) $('#ci-dormido').value = val(hoy, 'dormido_manual') ?? '';
+  if (document.activeElement !== $('#ci-pensamientos')) $('#ci-pensamientos').value = M[hoy]?.pensamientos?.texto || '';
+  const sem = periodo('sem').pasados, med = k => { const xs = sem.map(d => val(d, k)).filter(v => v != null).map(Number); return xs.length ? xs.reduce((x, y) => x + y, 0) / xs.length : null; };
+  const ms = med('satisfaccion'), ma = med('animo'), mdo = med('dormido_manual');
+  $('#ci-semana').textContent = ms == null && ma == null && mdo == null ? 'Rellénalo cada noche: aquí verás la media de la semana.'
+    : 'Esta semana: ' + [ms != null && `satisfacción ${ms.toFixed(1).replace('.', ',')}/5`, ma != null && `ánimo ${ma.toFixed(1).replace('.', ',')}/5`, mdo != null && `duermes ${mdo.toFixed(1).replace('.', ',')} h`].filter(Boolean).join(' · ');
+
   $('#sync').textContent = P.sync ? 'Datos del Mac actualizados: ' + new Date(P.sync.hora).toLocaleString('es-ES', {timeZone: tz, day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'}) : '';
 
   // ===== METAS =====
@@ -561,10 +589,10 @@ function pintarNegocio(hoy, ahora){
   if (!$('#neg-fuentes').contains(document.activeElement)) {
     const total = FUENTES.reduce((a, f) => a + (val(mes, f.k) || 0), 0);
     $('#neg-fuentes').innerHTML = [...FUENTES, GASTO].map(f => {
-      const v = val(mes, f.k), g = f === GASTO;
+      const g = f === GASTO, gd = g ? gastoDe(mes) : null, v = g ? gd?.valor : val(mes, f.k);
       return `<div class="fuente"><span style="font-weight:600${g ? ';color:var(--rojo)' : ''}">${g ? '− ' : ''}${f.n}</span>
         <input type="number" inputmode="decimal" data-fuente="${f.k}" value="${v ?? ''}" placeholder="0 €">
-        <small>${f.d}</small><span></span>
+        <small>${g && gd?.texto ? esc(gd.texto) + (gd.mes !== mes ? ' (como el mes pasado)' : '') : f.d}</small><span></span>
         ${g ? '' : `<div class="barra"><i style="width:${total ? (v || 0) / total * 100 : 0}%"></i></div>`}</div>`;
     }).join('');
   }
@@ -893,6 +921,16 @@ document.querySelectorAll('#cu-per,#cu-mes-per,#t-per').forEach(sg => sg.onclick
   if (sg.id === 'cu-per') perCu = e.target.dataset.p; else if (sg.id === 'cu-mes-per') perCuMes = e.target.dataset.p; else perT = e.target.dataset.p;
   pintar();
 });
+// Cierre del día
+for (const k of ['satisfaccion', 'animo']) document.querySelectorAll(`#ci-${k} button`).forEach(b => b.onclick = () => guardar(k, Number(b.dataset.v)));
+$('#ci-dormido-ok').onclick = () => { const v = parseFloat($('#ci-dormido').value.replace(',', '.')); if (isNaN(v) || v < 0 || v > 16) return toast('Pon las horas, de 0 a 16'); $('#ci-dormido').blur(); guardar('dormido_manual', v); };
+$('#ci-pensamientos-ok').onclick = async () => {
+  const t = $('#ci-pensamientos').value.trim(), hoy = hoyStr();
+  const {error} = await sb.from('metricas').upsert({fecha: hoy, clave: 'pensamientos', valor: null, texto: t, fuente: 'app', actualizado: new Date().toISOString()});
+  if (error) return toast('No se ha guardado');
+  (M[hoy] ||= {}).pensamientos = {valor: null, texto: t}; $('#ci-pensamientos').blur(); pintar(); toast('Guardado');
+};
+
 $('#add-prio').onclick = async () => {
   const t = $('#nueva-prio').value.trim(); if (!t || prios.length >= 3) return;
   const {data, error} = await sb.from('prioridades').insert({texto: t, fecha: hoyStr()}).select().single();
