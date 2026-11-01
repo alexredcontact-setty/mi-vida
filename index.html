@@ -176,6 +176,42 @@ input:focus{border-color:var(--acento)}
     </div>
   </section>
 
+  <!-- CONTENIDO -->
+  <section class="vista" id="v-contenido">
+    <p class="lbl" id="c-semana"></p>
+    <h1>Contenido</h1>
+
+    <h2>Tu semana</h2>
+    <div class="card">
+      <div class="fila"><div><p class="big" id="c-videos">0/10</p><p class="tiny">vídeos de tu marca publicados</p></div>
+        <div style="display:flex;gap:8px"><button class="btn2" id="c-menos" aria-label="Quitar un vídeo">−</button><button class="btn2" id="c-mas">+1 hoy</button></div></div>
+      <div class="puntos" id="c-dias"></div>
+      <p class="tiny" style="margin-top:10px" id="c-ritmo"></p>
+    </div>
+
+    <h2>En marcha</h2>
+    <div class="card">
+      <div class="seg" id="c-filtro" style="margin-bottom:12px"><button class="act" data-m="">Todo</button><button data-m="Alex">Tú</button><button data-m="Setty">Setty</button><button data-m="SYA">SYA</button></div>
+      <div class="lista" id="c-piezas"></div>
+      <div class="num"><input id="c-nueva" placeholder="Idea nueva"><button class="btn2" id="c-add">Añadir</button></div>
+      <p class="tiny" style="margin-top:8px">Toca el estado para avanzarlo. Al publicar algo tuyo, suma solo a la semana.</p>
+    </div>
+
+    <h2>Tus cuentas</h2>
+    <div class="card">
+      <div class="fila"><div><p class="big" id="c-seg">—</p><p class="tiny" id="c-seg-sub">seguidores en total · meta 5.000</p></div><div id="c-ring"></div></div>
+      <div class="lista" id="c-redes" style="margin-top:10px"></div>
+    </div>
+    <div class="card">
+      <div class="fila"><div><p class="big" id="c-mediana">—</p><p class="tiny">visitas típicas por vídeo · meta 1.000</p></div></div>
+      <div class="barra"><i id="c-bar-mediana" style="width:0;background:var(--azul)"></i></div>
+      <div class="num"><input id="c-in-mediana" type="number" inputmode="numeric" placeholder="Visitas típicas"><button class="btn2" id="c-g-mediana">Guardar</button></div>
+    </div>
+
+    <h2>YouTube de Setty y SYA</h2>
+    <div class="card"><div class="lista" id="c-yt"></div></div>
+  </section>
+
   <!-- METAS -->
   <section class="vista" id="v-metas">
     <p class="lbl">Hasta el 31 de enero · <span id="dias-quedan"></span></p>
@@ -232,7 +268,7 @@ input:focus{border-color:var(--acento)}
 <nav class="tabbar" id="tabbar" hidden>
   <button class="act" data-v="hoy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>Hoy</button>
   <button data-v="negocio"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 20h18M6 16v-5M11 16V7M16 16v-8M21 16V4"/></svg>Negocio</button>
-  <button class="pronto" data-p="Contenido"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M10 9l5 3-5 3z"/></svg>Contenido</button>
+  <button data-v="contenido"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M10 9l5 3-5 3z"/></svg>Contenido</button>
   <button class="pronto" data-p="Cuerpo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 7v10M18 7v10M3 10v4M21 10v4M6 12h12"/></svg>Cuerpo</button>
   <button class="pronto" data-p="Tiempo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Tiempo</button>
   <button data-v="metas"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5"/></svg>Metas</button>
@@ -247,7 +283,7 @@ const tz = 'Europe/Madrid';
 const hoyStr = () => new Date().toLocaleDateString('sv-SE', {timeZone: tz});
 const addDias = (s, n) => { const d = new Date(s + 'T12:00:00'); d.setDate(d.getDate() + n); return d.toLocaleDateString('sv-SE'); };
 const lunes = s => { const d = new Date(s + 'T12:00:00'); const w = (d.getDay() + 6) % 7; return addDias(s, -w); };
-let M = {}, P = {}, prios = [], tipoDia = null, clientes = [], abierto = null;
+let M = {}, P = {}, prios = [], tipoDia = null, clientes = [], abierto = null, piezas = [], filtroMarca = '';
 const FUENTES = [
   {k: 'ing_setty', n: 'Setty', d: 'Tu 50 % del neto que reparte Nix'},
   {k: 'ing_dividendo', n: 'Profesor del Dividendo', d: 'Facturas a Fran'},
@@ -284,16 +320,18 @@ async function guardar(clave, valor, fecha = hoyStr()){
 
 async function cargar(){
   const desde = addDias(hoyStr(), -60);
-  const [m, p, pr, mm, cl] = await Promise.all([
+  const [m, p, pr, mm, cl, pz] = await Promise.all([
     sb.from('metricas').select('fecha,clave,valor,texto').gte('fecha', desde),
     sb.from('paneles').select('clave,datos'),
     sb.from('prioridades').select('*').eq('fecha', hoyStr()).order('id'),
     sb.from('metricas').select('fecha,clave,valor,texto').gte('fecha', addMeses(mesDe(hoyStr()), -6)).or('clave.like.ing*,clave.eq.gastos_mes'),
     sb.from('clientes').select('*').order('id'),
+    sb.from('piezas').select('*').order('id'),
   ]);
   if (m.error) { toast('Sin acceso a los datos'); return; }
   M = {}; for (const r of [...(mm.data || []), ...m.data]) (M[r.fecha] ||= {})[r.clave] = r;
   clientes = cl.data || [];
+  piezas = pz.data || [];
   P = {}; for (const r of p.data || []) P[r.clave] = r.datos;
   prios = pr.data || [];
   pintar();
@@ -387,6 +425,7 @@ function pintar(){
   $('#seguidores').textContent = fmt(sg?.valor); $('#bar-seg').style.width = Math.min(100, (sg?.valor || 0) / 50) + '%';
 
   pintarNegocio(hoy, ahora);
+  pintarContenido(hoy);
 }
 
 function pintarNegocio(hoy, ahora){
@@ -441,6 +480,53 @@ function pintarNegocio(hoy, ahora){
       </div></div>`).join('') || '<div class="muted">Sin clientes todavía.</div>';
   }
   $('#neg-base').nextElementSibling.textContent = `al mes fijos para ti (cuota × tu parte)${sinCuota ? ` · ${sinCuota} sin cuota apuntada` : ''}`;
+}
+
+const ESTADOS = ['idea', 'guion', 'grabado', 'publicado'];
+const REDES = [{k: 'seg_tiktok', n: 'TikTok'}, {k: 'seg_ig', n: 'Instagram'}, {k: 'seg_yt', n: 'YouTube'}];
+const MARCA_COLOR = {Alex: 'var(--acento)', Setty: 'var(--azul)', SYA: 'var(--amarillo)'};
+
+function pintarContenido(hoy){
+  const lu = lunes(hoy), semana = [...Array(7)].map((_, i) => addDias(lu, i));
+  $('#c-semana').textContent = 'Semana del ' + new Date(lu + 'T12:00').toLocaleDateString('es-ES', {day: 'numeric', month: 'long'});
+  const vs = semana.reduce((a, d) => a + (val(d, 'videos') || 0), 0);
+  $('#c-videos').textContent = `${vs}/10`;
+  $('#c-dias').innerHTML = semana.map(d => { const v = val(d, 'videos') || 0, dd = new Date(d + 'T12:00').toLocaleDateString('es-ES', {weekday: 'narrow'});
+    return `<i class="${v ? 'ok' : d < hoy && d >= '2026-11-01' ? 'ko' : ''}">${v ? v : dd}</i>`; }).join('');
+  const quedan = semana.filter(d => d >= hoy).length, faltan = Math.max(0, 10 - vs);
+  $('#c-ritmo').textContent = faltan === 0 ? 'Semana cumplida ✓' : `Te faltan ${faltan} en ${quedan} ${quedan === 1 ? 'día' : 'días'}: unos ${Math.ceil(faltan / Math.max(1, quedan))} al día.`;
+
+  // Piezas en marcha
+  if (!$('#c-piezas').contains(document.activeElement)) {
+    const lista = piezas.filter(p => (!filtroMarca || p.marca === filtroMarca) && (p.estado !== 'publicado' || p.publicado >= addDias(hoy, -7)))
+      .sort((a, b) => ESTADOS.indexOf(a.estado) - ESTADOS.indexOf(b.estado) || a.id - b.id);
+    $('#c-piezas').innerHTML = lista.map(p => `<div class="fila" data-pieza="${p.id}">
+      <div style="min-width:0"><p style="font-weight:600${p.estado === 'publicado' ? ';color:var(--tx3);text-decoration:line-through' : ''}">${esc(p.titulo)}</p>
+        <p class="tiny"><span data-marca style="color:${MARCA_COLOR[p.marca]};cursor:pointer">${p.marca === 'Alex' ? 'Tú' : p.marca}</span> · <span data-formato style="cursor:pointer">${p.formato}</span></p></div>
+      <button class="pill ${p.estado === 'publicado' ? 'on' : p.estado === 'grabado' ? 'on' : ''}" data-estado>${p.estado === 'guion' ? 'guion' : p.estado}${p.estado !== 'publicado' ? ' →' : ' ✓'}</button></div>`).join('')
+      || '<div class="muted">Nada en marcha. Apunta la próxima idea abajo.</div>';
+  }
+
+  // Cuentas
+  const total = REDES.reduce((a, r) => a + (ultimo(r.k)?.valor || 0), 0) || ultimo('seguidores')?.valor || null;
+  $('#c-seg').textContent = fmt(total);
+  $('#c-ring').innerHTML = ring((total || 0) / 5000, 'var(--morado)', 64);
+  const hace = d => { const fs = Object.keys(M).filter(f => f <= addDias(hoy, -7)).sort().reverse(); return k => { for (const f of fs) if (M[f][k]?.valor != null) return M[f][k].valor; return null; }; };
+  const antes = hace();
+  if (!$('#c-redes').contains(document.activeElement)) {
+    $('#c-redes').innerHTML = REDES.map(r => { const u = ultimo(r.k), a = antes(r.k), dif = u && a != null ? u.valor - a : null;
+      return `<div class="fuente"><span style="font-weight:600">${r.n}</span>
+        <input type="number" inputmode="numeric" data-red="${r.k}" value="${u?.valor ?? ''}" placeholder="0">
+        <small>${dif != null ? (dif >= 0 ? '+' : '') + fmt(dif) + ' en 7 días' : u ? 'apuntado el ' + new Date(u.fecha + 'T12:00').toLocaleDateString('es-ES', {day: 'numeric', month: 'short'}) : 'sin apuntar'}</small><span></span></div>`; }).join('');
+  }
+  const md = ultimo('mediana_visitas');
+  $('#c-mediana').textContent = fmt(md?.valor); $('#c-bar-mediana').style.width = Math.min(100, (md?.valor || 0) / 10) + '%';
+
+  // YouTube Setty y SYA
+  const yt = P.youtube || {};
+  $('#c-yt').innerHTML = Object.entries(yt).map(([marca, vids]) => `<div><p class="lbl" style="color:${MARCA_COLOR[marca]};margin-bottom:6px">${marca}</p>
+    ${vids.slice(0, 4).map(v => `<div class="fila" style="padding:5px 0"><a href="https://youtu.be/${esc(v.id)}" target="_blank" rel="noopener" style="color:var(--tx);text-decoration:none;font-size:15px;min-width:0">${esc(v.titulo)}</a><span class="tiny" style="white-space:nowrap">${fmt(v.visitas)} vis.</span></div>`).join('')}</div>`).join('')
+    || '<div class="muted">Se rellena con la próxima sincronización del Mac.</div>';
 }
 
 async function guardarFuente(clave, valor){
@@ -510,7 +596,47 @@ $('#cl-add').onclick = async () => {
   if (error) return toast('No se ha guardado');
   clientes.push(data); ['#cl-nombre', '#cl-cuota', '#cl-parte'].forEach(s => $(s).value = ''); pintar(); toast('Cliente añadido');
 };
-$('#mas-video').onclick =() => guardar('videos', (val(hoyStr(), 'videos') || 0) + 1);
+$('#mas-video').onclick = () => guardar('videos', (val(hoyStr(), 'videos') || 0) + 1);
+// Contenido
+$('#c-mas').onclick = () => guardar('videos', (val(hoyStr(), 'videos') || 0) + 1);
+$('#c-menos').onclick = () => { const v = val(hoyStr(), 'videos') || 0; if (v > 0) guardar('videos', v - 1); };
+$('#c-filtro').onclick = e => { if (e.target.tagName !== 'BUTTON') return; filtroMarca = e.target.dataset.m;
+  $('#c-filtro').querySelectorAll('button').forEach(b => b.classList.toggle('act', b === e.target)); pintar(); };
+$('#c-add').onclick = async () => {
+  const t = $('#c-nueva').value.trim(); if (!t) return;
+  const {data, error} = await sb.from('piezas').insert({titulo: t, marca: filtroMarca || 'Alex'}).select().single();
+  if (error) return toast('No se ha guardado');
+  piezas.push(data); $('#c-nueva').value = ''; pintar(); toast('Idea apuntada');
+};
+$('#c-nueva').onkeydown = e => { if (e.key === 'Enter') $('#c-add').click(); };
+$('#c-piezas').onclick = async e => {
+  const el = e.target.closest('[data-pieza]'); if (!el) return;
+  const p = piezas.find(x => x.id == el.dataset.pieza), cambios = {};
+  if (e.target.closest('[data-estado]')) {
+    if (p.estado === 'publicado') return;
+    cambios.estado = ESTADOS[ESTADOS.indexOf(p.estado) + 1];
+    if (cambios.estado === 'publicado') cambios.publicado = hoyStr();
+  } else if (e.target.closest('[data-marca]')) {
+    const ms = ['Alex', 'Setty', 'SYA']; cambios.marca = ms[(ms.indexOf(p.marca) + 1) % 3];
+  } else if (e.target.closest('[data-formato]')) {
+    const fs = ['Reel', 'TikTok', 'YouTube']; cambios.formato = fs[(fs.indexOf(p.formato) + 1) % 3];
+  } else return;
+  const {error} = await sb.from('piezas').update(cambios).eq('id', p.id);
+  if (error) return toast('No se ha guardado');
+  Object.assign(p, cambios);
+  if (cambios.estado === 'publicado' && p.marca === 'Alex') guardar('videos', (val(hoyStr(), 'videos') || 0) + 1); else pintar();
+};
+$('#c-redes').addEventListener('change', async e => {
+  const k = e.target.dataset.red; if (!k) return;
+  const v = parseFloat(e.target.value); if (isNaN(v)) return toast('Escribe un número');
+  e.target.blur(); const hoy = hoyStr(); (M[hoy] ||= {})[k] = {valor: v};
+  const total = REDES.reduce((a, r) => a + (ultimo(r.k)?.valor || 0), 0);
+  const {error} = await sb.from('metricas').upsert([{fecha: hoy, clave: k, valor: v, fuente: 'app'}, {fecha: hoy, clave: 'seguidores', valor: total, fuente: 'app'}]);
+  if (error) return toast('No se ha guardado');
+  M[hoy].seguidores = {valor: total}; pintar(); toast('Guardado');
+});
+$('#c-redes').addEventListener('keydown', e => { if (e.key === 'Enter') e.target.blur(); });
+$('#c-g-mediana').onclick = () => { const v = parseFloat($('#c-in-mediana').value); if (isNaN(v)) return toast('Escribe un número'); $('#c-in-mediana').value = ''; guardar('mediana_visitas', v); };
 $('#add-prio').onclick = async () => {
   const t = $('#nueva-prio').value.trim(); if (!t || prios.length >= 3) return;
   const {data, error} = await sb.from('prioridades').insert({texto: t, fecha: hoyStr()}).select().single();
