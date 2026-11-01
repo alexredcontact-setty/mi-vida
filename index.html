@@ -51,6 +51,7 @@ input:focus{border-color:var(--acento)}
 .check{display:flex;gap:12px;align-items:flex-start}
 .check b{flex:0 0 22px;height:22px;border-radius:50%;border:2px solid var(--tx3);margin-top:1px}
 .check.ok b{background:var(--acento);border-color:var(--acento);box-shadow:inset 0 0 0 3px var(--card)}
+.ev{display:flex;gap:12px;align-items:flex-start} .ev .hr{flex:0 0 52px;font-variant-numeric:tabular-nums;font-weight:600;font-size:15px} .ev.pasado{opacity:.4} .ev.ahora .hr{color:var(--acento)} .ev .barrita{flex:0 0 3px;align-self:stretch;border-radius:2px;background:var(--card2)} .ev.ahora .barrita{background:var(--acento)} .dia-ag{color:var(--tx2);font-size:13px;font-weight:600;text-transform:capitalize;margin:12px 0 2px}
 .check.ok span{color:var(--tx3);text-decoration:line-through}
 .puntos{display:flex;gap:6px;margin-top:12px}
 .puntos i{flex:1;height:30px;border-radius:8px;background:var(--card2);display:grid;place-items:center;font-style:normal;font-size:11px;color:var(--tx3)}
@@ -139,6 +140,12 @@ input:focus{border-color:var(--acento)}
       <div class="lista" id="prios"></div>
       <div class="num"><input id="nueva-prio" placeholder="Añadir prioridad de hoy"><button class="btn2" id="add-prio">Añadir</button></div>
       <p class="tiny" style="margin-top:8px">Máximo 3. Lo que más dinero acerca, primero.</p>
+    </div>
+
+    <h2>Agenda</h2>
+    <div class="card">
+      <div class="seg" id="seg-agenda"><button class="act" data-p="hoy">Hoy</button><button data-p="man">Mañana</button><button data-p="sem">7 días</button></div>
+      <div id="agenda" style="margin-top:10px"></div>
     </div>
 
     <h2>Foco</h2>
@@ -440,6 +447,7 @@ const mesDe = s => s.slice(0, 8) + '01';
 // Vídeos del día: lo publicado según Zernio o lo apuntado a mano, lo que sea mayor
 const vid = d => Math.max(val(d, 'videos') || 0, val(d, 'videos_pub') || 0);
 // Periodos: semana actual, semana pasada, mes actual, mes pasado
+let perAg = 'hoy';
 let gastos = [], perCu = 'sem', perCuMes = 'mes', perT = 'sem', perDieta = 'mes', diaDieta = null;
 function periodo(tipo, hoy = hoyStr()){
   let desde, n;
@@ -500,6 +508,25 @@ async function cargar(){
   pintar();
 }
 
+function pintarAgenda(hoy){
+  const cal = P.calendario, evs = cal?.eventos || [];
+  if (!cal) { $('#agenda').innerHTML = '<p class="muted">Conectando tu Google Calendar…</p>'; return; }
+  const ahoraHM = new Date().toLocaleTimeString('es-ES', {timeZone: tz, hour: '2-digit', minute: '2-digit', hour12: false});
+  const dias = perAg === 'hoy' ? [hoy] : perAg === 'man' ? [addDias(hoy, 1)] : [...Array(7)].map((_, i) => addDias(hoy, i));
+  const fila = e => {
+    const pasado = e.fecha < hoy || (e.fecha === hoy && e.fin && e.fin <= ahoraHM);
+    const ahora = e.fecha === hoy && e.ini && e.ini <= ahoraHM && e.fin > ahoraHM;
+    return `<div class="ev ${pasado ? 'pasado' : ''} ${ahora ? 'ahora' : ''}"><span class="hr">${e.ini || 'Todo'}</span><i class="barrita"></i><div><p style="font-size:15px;font-weight:500">${esc(e.titulo)}</p><p class="tiny">${e.ini ? e.ini + '–' + e.fin : 'Todo el día'}${ahora ? ' · ahora' : ''}${e.lugar ? ' · ' + esc(e.lugar) : ''}</p></div></div>`;
+  };
+  const html = dias.map(d => {
+    const del = evs.filter(e => e.fecha === d);
+    const cab = perAg === 'sem' ? `<p class="dia-ag">${d === hoy ? 'Hoy' : d === addDias(hoy, 1) ? 'Mañana' : new Date(d + 'T12:00').toLocaleDateString('es-ES', {weekday: 'long', day: 'numeric'})}</p>` : '';
+    if (!del.length) return perAg === 'sem' ? '' : '<p class="muted">Nada en el calendario.</p>';
+    return cab + `<div class="lista">${del.map(fila).join('')}</div>`;
+  }).join('');
+  $('#agenda').innerHTML = html || '<p class="muted">Nada en el calendario estos días.</p>';
+}
+
 function pintar(){
   const hoy = hoyStr(), ahora = new Date();
   const h = Number(ahora.toLocaleString('es-ES', {timeZone: tz, hour: '2-digit', hour12: false}));
@@ -510,6 +537,9 @@ function pintar(){
   $('#prios').innerHTML = prios.length ? prios.map(p => `<div class="check ${p.hecho ? 'ok' : ''}" data-id="${p.id}"><b></b><span>${p.texto.replace(/</g,'&lt;')}</span></div>`).join('')
     : '<div class="muted">Aún no hay prioridades para hoy.</div>';
   $('#add-prio').disabled = prios.length >= 3; $('#nueva-prio').disabled = prios.length >= 3;
+
+  // Agenda (Google Calendar, panel «calendario» del sync)
+  pintarAgenda(hoy);
 
   // Foco
   const f = P.foco || {mejores: [], despiste: []};
@@ -1046,6 +1076,11 @@ document.querySelectorAll('#cu-per,#cu-mes-per,#t-per,#dt-per').forEach(sg => sg
   if (sg.id === 'cu-per') perCu = e.target.dataset.p; else if (sg.id === 'cu-mes-per') perCuMes = e.target.dataset.p; else if (sg.id === 'dt-per') { perDieta = e.target.dataset.p; diaDieta = null; } else perT = e.target.dataset.p;
   pintar();
 });
+$('#seg-agenda').onclick = e => {
+  if (e.target.tagName !== 'BUTTON') return;
+  $('#seg-agenda').querySelectorAll('button').forEach(b => b.classList.toggle('act', b === e.target));
+  perAg = e.target.dataset.p; pintarAgenda(hoyStr());
+};
 // Cierre del día
 for (const k of ['satisfaccion', 'animo']) document.querySelectorAll(`#ci-${k} button`).forEach(b => b.onclick = () => guardar(k, Number(b.dataset.v)));
 $('#ci-dormido-ok').onclick = () => { const v = parseFloat($('#ci-dormido').value.replace(',', '.')); if (isNaN(v) || v < 0 || v > 16) return toast('Pon las horas, de 0 a 16'); $('#ci-dormido').blur(); guardar('dormido_manual', v); };
