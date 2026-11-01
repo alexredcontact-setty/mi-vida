@@ -405,8 +405,7 @@ const lunes = s => { const d = new Date(s + 'T12:00:00'); const w = (d.getDay() 
 let M = {}, P = {}, prios = [], tipoDia = null, clientes = [], abierto = null, piezas = [], filtroMarca = '';
 const FUENTES = [
   {k: 'ing_setty', n: 'Setty', d: 'Tu 50 % del neto que reparte Nix'},
-  {k: 'ing_fran', n: 'Fran · 10 % suscripciones', d: 'Automático: lo cobrado en Stripe este mes, sin IVA', auto: true},
-  {k: 'ing_dividendo', n: 'Profesor del Dividendo', d: 'Desarrollo y otras facturas a Fran'},
+  {k: 'ing_dividendo', n: 'Profesor del Dividendo', d: 'Facturas a Fran cuando te las paga (10 % cada 3 meses)'},
   {k: 'ing_consultoria', n: 'Consultoría', d: 'Onboardings y llamadas'},
   {k: 'ing_nix', n: 'Proyectos Nix', d: 'Raúl y otros encargos'},
   {k: 'ing_otros', n: 'Otros', d: 'Lo que no encaje arriba'},
@@ -611,10 +610,10 @@ function pintarNegocio(hoy, ahora){
     + (x.anuales_renovados.n ? filaF('Anuales renovados', eur2(x.anuales_renovados.eur), x.anuales_renovados.n + ' ×') : '')
     + (x.reembolsos.n ? filaF('Devoluciones', '− ' + eur2(x.reembolsos.eur), x.reembolsos.n + ' ×') : '');
   $('#neg-fran').innerHTML = !fmes ? '<p class="muted">Se actualiza solo cada hora desde Stripe.</p>'
-    : `<div class="fila"><div><p class="big">${eur2(fmes.parte_alex_10)}</p><p class="tiny">tu 10 % de este mes · cobrado de verdad</p></div></div>
+    : `<div class="fila"><div><p class="big">${eur2(fmes.parte_alex_10)}</p><p class="tiny">tu 10 % de este mes · sin IVA ni comisiones · aún no cuenta en tu neto</p></div></div>
       <div style="margin-top:10px">${desglose(fmes)}</div>
-      <div style="border-top:1px solid #2c2c2e;margin-top:6px;padding-top:6px">${filaF('Cobrado con IVA', eur2(fmes.bruto_con_iva))}${filaF('Sin IVA', eur2(fmes.sin_iva))}</div>
-      <p class="tiny" style="margin-top:8px">${fant ? `El mes pasado: ${eur2(fant.parte_alex_10)} para ti. ` : ''}Últimos 3 meses: ${eur2(fm.slice(0, 3).reduce((a, x) => a + x.parte_alex_10, 0))}. Actualizado ${new Date(pf.generado).toLocaleString('es-ES', {timeZone: tz, day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'})}.</p>`;
+      <div style="border-top:1px solid #2c2c2e;margin-top:6px;padding-top:6px">${filaF('Cobrado con IVA', eur2(fmes.bruto_con_iva))}${filaF('Sin IVA', eur2(fmes.sin_iva))}${fmes.comisiones_stripe != null ? filaF('− Comisiones de Stripe', eur2(fmes.comisiones_stripe)) : ''}</div>
+      <p class="tiny" style="margin-top:8px">${fant ? `El mes pasado: ${eur2(fant.parte_alex_10)} para ti. ` : ''}${pf.facturado_hasta ? `<b style="color:var(--tx)">Te llega en ${pf.se_cobra ? new Date(pf.se_cobra + '-01T12:00').toLocaleDateString('es-ES', {month: 'long'}) : 'la próxima factura'}: ${eur2(fm.filter(x => x.mes > pf.facturado_hasta).reduce((a, x) => a + x.parte_alex_10, 0))}</b> + IVA (acumulado desde ${new Date(addMeses(pf.facturado_hasta + '-01', 1) + 'T12:00').toLocaleDateString('es-ES', {month: 'long'})}). ` : ''} Actualizado ${new Date(pf.generado).toLocaleString('es-ES', {timeZone: tz, day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'})}.</p>`;
 
   // Últimos 6 meses
   const meses = [...Array(6)].map((_, i) => addMeses(mes, i - 5)), vals = meses.map(neto);
