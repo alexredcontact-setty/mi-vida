@@ -191,6 +191,9 @@ input:focus{border-color:var(--acento)}
     <div class="card lista" id="neg-fuentes"></div>
     <p class="tiny" style="margin:-4px 4px 0">Apunta lo que ya has cobrado este mes, en neto. Se guarda solo al salir de cada casilla.</p>
 
+    <h2>Fran · lo que llevas</h2>
+    <div class="card" id="neg-fran"></div>
+
     <h2>Últimos 6 meses</h2>
     <div class="card">
       <div class="meses" id="neg-meses"></div>
@@ -402,7 +405,8 @@ const lunes = s => { const d = new Date(s + 'T12:00:00'); const w = (d.getDay() 
 let M = {}, P = {}, prios = [], tipoDia = null, clientes = [], abierto = null, piezas = [], filtroMarca = '';
 const FUENTES = [
   {k: 'ing_setty', n: 'Setty', d: 'Tu 50 % del neto que reparte Nix'},
-  {k: 'ing_dividendo', n: 'Profesor del Dividendo', d: 'Facturas a Fran'},
+  {k: 'ing_fran', n: 'Fran · 10 % suscripciones', d: 'Automático: lo cobrado en Stripe este mes, sin IVA', auto: true},
+  {k: 'ing_dividendo', n: 'Profesor del Dividendo', d: 'Desarrollo y otras facturas a Fran'},
   {k: 'ing_consultoria', n: 'Consultoría', d: 'Onboardings y llamadas'},
   {k: 'ing_nix', n: 'Proyectos Nix', d: 'Raúl y otros encargos'},
   {k: 'ing_otros', n: 'Otros', d: 'Lo que no encaje arriba'},
@@ -591,11 +595,26 @@ function pintarNegocio(hoy, ahora){
     $('#neg-fuentes').innerHTML = [...FUENTES, GASTO].map(f => {
       const g = f === GASTO, gd = g ? gastoDe(mes) : null, v = g ? gd?.valor : val(mes, f.k);
       return `<div class="fuente"><span style="font-weight:600${g ? ';color:var(--rojo)' : ''}">${g ? '− ' : ''}${f.n}</span>
-        <input type="number" inputmode="decimal" data-fuente="${f.k}" value="${v ?? ''}" placeholder="0 €">
+        ${f.auto ? `<span style="font-weight:600;text-align:right">${v == null ? '—' : euros(v)}</span>` : `<input type="number" inputmode="decimal" data-fuente="${f.k}" value="${v ?? ''}" placeholder="0 €">`}
         <small>${g && gd?.texto ? esc(gd.texto) + (gd.mes !== mes ? ' (como el mes pasado)' : '') : f.d}</small><span></span>
         ${g ? '' : `<div class="barra"><i style="width:${total ? (v || 0) / total * 100 : 0}%"></i></div>`}</div>`;
     }).join('');
   }
+
+  // Fran: desglose real de Stripe
+  const pf = P.fran, fm = pf?.meses || [];
+  const fmes = fm.find(x => x.mes === mes.slice(0, 7)), fant = fm.find(x => x.mes === addMeses(mes, -1).slice(0, 7));
+  const eur2 = n => new Intl.NumberFormat('es-ES', {minimumFractionDigits: 2, maximumFractionDigits: 2}).format(n) + ' €';
+  const filaF = (a, b, c) => `<div class="fila" style="padding:5px 0"><span>${a}</span><span style="display:flex;gap:12px"><span class="tiny">${c || ''}</span><span style="font-weight:600;min-width:84px;text-align:right">${b}</span></span></div>`;
+  const desglose = x => Object.entries(x.mensuales).sort((a, b) => b[0] - a[0]).map(([p, v]) => filaF(`Mensuales a ${p.replace('.', ',')} €`, eur2(v.eur), v.n + ' ×')).join('')
+    + (x.anuales_nuevos.n ? filaF('Anuales nuevos', eur2(x.anuales_nuevos.eur), x.anuales_nuevos.n + ' ×') : '')
+    + (x.anuales_renovados.n ? filaF('Anuales renovados', eur2(x.anuales_renovados.eur), x.anuales_renovados.n + ' ×') : '')
+    + (x.reembolsos.n ? filaF('Devoluciones', '− ' + eur2(x.reembolsos.eur), x.reembolsos.n + ' ×') : '');
+  $('#neg-fran').innerHTML = !fmes ? '<p class="muted">Se actualiza solo cada hora desde Stripe.</p>'
+    : `<div class="fila"><div><p class="big">${eur2(fmes.parte_alex_10)}</p><p class="tiny">tu 10 % de este mes · cobrado de verdad</p></div></div>
+      <div style="margin-top:10px">${desglose(fmes)}</div>
+      <div style="border-top:1px solid #2c2c2e;margin-top:6px;padding-top:6px">${filaF('Cobrado con IVA', eur2(fmes.bruto_con_iva))}${filaF('Sin IVA', eur2(fmes.sin_iva))}</div>
+      <p class="tiny" style="margin-top:8px">${fant ? `El mes pasado: ${eur2(fant.parte_alex_10)} para ti. ` : ''}Últimos 3 meses: ${eur2(fm.slice(0, 3).reduce((a, x) => a + x.parte_alex_10, 0))}. Actualizado ${new Date(pf.generado).toLocaleString('es-ES', {timeZone: tz, day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'})}.</p>`;
 
   // Últimos 6 meses
   const meses = [...Array(6)].map((_, i) => addMeses(mes, i - 5)), vals = meses.map(neto);
