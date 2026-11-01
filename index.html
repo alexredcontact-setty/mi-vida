@@ -74,6 +74,19 @@ input:focus{border-color:var(--acento)}
 .toast.on{opacity:1}
 .cab{display:flex;justify-content:space-between;align-items:flex-end}
 .salir{background:none;color:var(--tx3);font-size:13px}
+.fuente{display:grid;grid-template-columns:1fr 112px;gap:2px 12px;align-items:center}
+.fuente input{padding:9px 12px;text-align:right}
+.fuente small{color:var(--tx3);font-size:13px}
+.fuente .barra{grid-column:1/-1;height:5px;margin-top:6px}
+.meses{display:flex;align-items:flex-end;gap:8px;height:150px;margin-top:14px;position:relative}
+.meses .linea{position:absolute;left:0;right:0;border-top:1px dashed var(--tx3);pointer-events:none}
+.meses .linea span{position:absolute;right:0;top:-18px;font-size:11px;color:var(--tx3)}
+.meses div{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:4px}
+.meses b{width:100%;border-radius:6px 6px 3px 3px;background:var(--card2);min-height:3px;transition:height .6s}
+.meses b.act{background:var(--acento)} .meses b.ok{background:var(--verde)}
+.meses em{font-style:normal;font-size:11px;color:var(--tx2)} .meses small{font-size:11px;color:var(--tx3)}
+.cli{cursor:pointer} .cli .ed{display:none;margin-top:10px} .cli.abierto .ed{display:block}
+.ed .num{margin-top:8px}
 </style>
 </head>
 <body>
@@ -128,6 +141,41 @@ input:focus{border-color:var(--acento)}
     <p class="tiny" id="sync" style="text-align:center;margin-top:18px"></p>
   </section>
 
+  <!-- NEGOCIO -->
+  <section class="vista" id="v-negocio">
+    <p class="lbl" id="neg-mes"></p>
+    <h1>Negocio</h1>
+
+    <h2>Este mes</h2>
+    <div class="card">
+      <div class="fila"><div><p class="big" id="neg-neto">—</p><p class="tiny" id="neg-neto-sub"></p></div><div id="neg-ring"></div></div>
+      <div class="barra"><i id="neg-bar" style="width:0"></i></div>
+      <p class="tiny" style="margin-top:10px" id="neg-falta"></p>
+    </div>
+
+    <h2>De dónde viene</h2>
+    <div class="card lista" id="neg-fuentes"></div>
+    <p class="tiny" style="margin:-4px 4px 0">Apunta lo que ya has cobrado este mes, en neto. Se guarda solo al salir de cada casilla.</p>
+
+    <h2>Últimos 6 meses</h2>
+    <div class="card">
+      <div class="meses" id="neg-meses"></div>
+    </div>
+
+    <h2>Clientes</h2>
+    <div class="card">
+      <div class="fila"><div><p class="big" id="neg-base">—</p><p class="tiny">al mes fijos para ti (cuota × tu parte)</p></div></div>
+      <div class="lista" id="neg-clientes" style="margin-top:12px"></div>
+    </div>
+    <div class="card">
+      <p class="lbl" style="margin-bottom:10px">Añadir cliente</p>
+      <input id="cl-nombre" placeholder="Nombre del cliente" style="margin-bottom:8px">
+      <div class="seg" id="cl-proy" style="margin-bottom:8px"><button class="act">Setty</button><button>Dividendo</button><button>Consultoría</button><button>Nix</button></div>
+      <div class="num" style="margin-top:0"><input id="cl-cuota" type="number" inputmode="decimal" placeholder="Cuota €/mes"><input id="cl-parte" type="number" inputmode="numeric" placeholder="Tu %"><button class="btn2" id="cl-add">Añadir</button></div>
+      <p class="tiny" style="margin-top:8px">Setty: tu parte es el 50 % de los clientes que entran desde el 21/10.</p>
+    </div>
+  </section>
+
   <!-- METAS -->
   <section class="vista" id="v-metas">
     <p class="lbl">Hasta el 31 de enero · <span id="dias-quedan"></span></p>
@@ -136,7 +184,7 @@ input:focus{border-color:var(--acento)}
     <h2>💶 Dinero</h2>
     <div class="card">
       <div class="fila"><div><p class="big" id="ingresos">—</p><p class="tiny" id="ingresos-mes"></p></div><div id="ring-dinero"></div></div>
-      <div class="num"><input id="in-ingresos" type="number" inputmode="decimal" placeholder="Netos del mes (€)"><button class="btn2" data-guardar="ingresos">Guardar</button></div>
+      <button class="btn2" id="ir-negocio" style="width:100%;margin-top:12px">Apuntar ingresos en Negocio</button>
       <p class="tiny" style="margin-top:8px">Meta: 5.000 € netos al mes, estables, en enero.</p>
     </div>
 
@@ -183,7 +231,7 @@ input:focus{border-color:var(--acento)}
 
 <nav class="tabbar" id="tabbar" hidden>
   <button class="act" data-v="hoy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>Hoy</button>
-  <button class="pronto" data-p="Negocio"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 20h18M6 16v-5M11 16V7M16 16v-8M21 16V4"/></svg>Negocio</button>
+  <button data-v="negocio"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 20h18M6 16v-5M11 16V7M16 16v-8M21 16V4"/></svg>Negocio</button>
   <button class="pronto" data-p="Contenido"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M10 9l5 3-5 3z"/></svg>Contenido</button>
   <button class="pronto" data-p="Cuerpo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 7v10M18 7v10M3 10v4M21 10v4M6 12h12"/></svg>Cuerpo</button>
   <button class="pronto" data-p="Tiempo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Tiempo</button>
@@ -199,7 +247,25 @@ const tz = 'Europe/Madrid';
 const hoyStr = () => new Date().toLocaleDateString('sv-SE', {timeZone: tz});
 const addDias = (s, n) => { const d = new Date(s + 'T12:00:00'); d.setDate(d.getDate() + n); return d.toLocaleDateString('sv-SE'); };
 const lunes = s => { const d = new Date(s + 'T12:00:00'); const w = (d.getDay() + 6) % 7; return addDias(s, -w); };
-let M = {}, P = {}, prios = [], tipoDia = null;
+let M = {}, P = {}, prios = [], tipoDia = null, clientes = [], abierto = null;
+const FUENTES = [
+  {k: 'ing_setty', n: 'Setty', d: 'Tu 50 % del neto que reparte Nix'},
+  {k: 'ing_dividendo', n: 'Profesor del Dividendo', d: 'Facturas a Fran'},
+  {k: 'ing_consultoria', n: 'Consultoría', d: 'Onboardings y llamadas'},
+  {k: 'ing_nix', n: 'Proyectos Nix', d: 'Raúl y otros encargos'},
+  {k: 'ing_otros', n: 'Otros', d: 'Lo que no encaje arriba'},
+];
+const GASTO = {k: 'gastos_mes', n: 'Gastos', d: 'Herramientas, cuota de autónomo…'};
+const mesDe = s => s.slice(0, 8) + '01';
+const addMeses = (s, n) => { const d = new Date(s + 'T12:00:00'); d.setDate(1); d.setMonth(d.getMonth() + n); return d.toLocaleDateString('sv-SE'); };
+const euros = n => n == null ? '—' : fmt(Math.round(n)) + ' €';
+const esc = t => String(t ?? '').replace(/[&<>"]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]));
+// Neto del mes: si hay fuentes apuntadas, suma − gastos; si no, el valor antiguo de ingresos_mes
+function neto(mes){
+  const hay = FUENTES.some(f => val(mes, f.k) != null) || val(mes, GASTO.k) != null;
+  if (!hay) return val(mes, 'ingresos_mes');
+  return FUENTES.reduce((a, f) => a + (val(mes, f.k) || 0), 0) - (val(mes, GASTO.k) || 0);
+}
 
 function toast(t){ const e = $('#toast'); e.textContent = t; e.classList.add('on'); setTimeout(() => e.classList.remove('on'), 1600); }
 function ring(pct, color, size = 56){
@@ -218,13 +284,16 @@ async function guardar(clave, valor, fecha = hoyStr()){
 
 async function cargar(){
   const desde = addDias(hoyStr(), -60);
-  const [m, p, pr] = await Promise.all([
+  const [m, p, pr, mm, cl] = await Promise.all([
     sb.from('metricas').select('fecha,clave,valor,texto').gte('fecha', desde),
     sb.from('paneles').select('clave,datos'),
     sb.from('prioridades').select('*').eq('fecha', hoyStr()).order('id'),
+    sb.from('metricas').select('fecha,clave,valor,texto').gte('fecha', addMeses(mesDe(hoyStr()), -6)).or('clave.like.ing*,clave.eq.gastos_mes'),
+    sb.from('clientes').select('*').order('id'),
   ]);
   if (m.error) { toast('Sin acceso a los datos'); return; }
-  M = {}; for (const r of m.data) (M[r.fecha] ||= {})[r.clave] = r;
+  M = {}; for (const r of [...(mm.data || []), ...m.data]) (M[r.fecha] ||= {})[r.clave] = r;
+  clientes = cl.data || [];
   P = {}; for (const r of p.data || []) P[r.clave] = r.datos;
   prios = pr.data || [];
   pintar();
@@ -279,7 +348,7 @@ function pintar(){
   $('#dias-quedan').textContent = `quedan ${dias} días`;
 
   // Dinero (valor guardado el día 1 de cada mes)
-  const mes = hoy.slice(0, 8) + '01', ing = val(mes, 'ingresos_mes');
+  const mes = mesDe(hoy), ing = neto(mes);
   $('#ingresos').textContent = ing == null ? '—' : fmt(ing) + ' €';
   const nombreMes = ahora.toLocaleDateString('es-ES', {month: 'long', timeZone: tz});
   $('#ingresos-mes').textContent = ing == null ? `Apunta lo que llevas en ${nombreMes}` : `de 5.000 € en ${nombreMes} · ${Math.round(ing / 50)} %`;
@@ -316,6 +385,75 @@ function pintar(){
   const md = ultimo('mediana_visitas'), sg = ultimo('seguidores');
   $('#mediana').textContent = fmt(md?.valor); $('#bar-mediana').style.width = Math.min(100, (md?.valor || 0) / 10) + '%';
   $('#seguidores').textContent = fmt(sg?.valor); $('#bar-seg').style.width = Math.min(100, (sg?.valor || 0) / 50) + '%';
+
+  pintarNegocio(hoy, ahora);
+}
+
+function pintarNegocio(hoy, ahora){
+  const mes = mesDe(hoy), n = neto(mes), meta = 5000;
+  const nombreMes = ahora.toLocaleDateString('es-ES', {month: 'long', year: 'numeric', timeZone: tz});
+  $('#neg-mes').textContent = nombreMes;
+  $('#neg-neto').textContent = euros(n);
+  $('#neg-neto-sub').textContent = n == null ? 'Aún no has apuntado nada este mes' : `netos · ${Math.round(n / meta * 100)} % de 5.000 €`;
+  $('#neg-ring').innerHTML = ring((n || 0) / meta, 'var(--acento)', 64);
+  $('#neg-bar').style.width = Math.min(100, (n || 0) / meta * 100) + '%';
+  const diasMes = new Date(ahora.getFullYear(), ahora.getMonth() + 1, 0).getDate(), dia = Number(hoy.slice(8));
+  const ant = neto(addMeses(mes, -1)), falta = meta - (n || 0);
+  $('#neg-falta').innerHTML = (falta > 0 ? `Te faltan <b style="color:var(--tx)">${euros(falta)}</b> en ${diasMes - dia + 1} días.` : '<b style="color:var(--verde)">Meta del mes cumplida ✓</b>')
+    + (ant != null ? ` El mes pasado: ${euros(ant)}.` : '');
+
+  // Fuentes (no se repintan mientras escribes en una)
+  if (!$('#neg-fuentes').contains(document.activeElement)) {
+    const total = FUENTES.reduce((a, f) => a + (val(mes, f.k) || 0), 0);
+    $('#neg-fuentes').innerHTML = [...FUENTES, GASTO].map(f => {
+      const v = val(mes, f.k), g = f === GASTO;
+      return `<div class="fuente"><span style="font-weight:600${g ? ';color:var(--rojo)' : ''}">${g ? '− ' : ''}${f.n}</span>
+        <input type="number" inputmode="decimal" data-fuente="${f.k}" value="${v ?? ''}" placeholder="0 €">
+        <small>${f.d}</small><span></span>
+        ${g ? '' : `<div class="barra"><i style="width:${total ? (v || 0) / total * 100 : 0}%"></i></div>`}</div>`;
+    }).join('');
+  }
+
+  // Últimos 6 meses
+  const meses = [...Array(6)].map((_, i) => addMeses(mes, i - 5)), vals = meses.map(neto);
+  const tope = Math.max(meta * 1.1, ...vals.map(v => v || 0));
+  $('#neg-meses').innerHTML = `<p class="linea" style="bottom:calc((100% - 34px) * ${meta / tope} + 19px)"><span>5.000 €</span></p>` + meses.map((m, i) => {
+    const v = vals[i], alto = Math.max(0, (v || 0) / tope);
+    const et = new Date(m + 'T12:00').toLocaleDateString('es-ES', {month: 'short'}).replace('.', '');
+    return `<div><em>${v == null ? '' : v >= 1000 ? (v / 1000).toFixed(1).replace('.', ',') + 'k' : Math.round(v)}</em>
+      <b class="${v >= meta ? 'ok' : m === mes ? 'act' : ''}" style="height:calc((100% - 34px) * ${alto})"></b><small>${et}</small></div>`;
+  }).join('');
+
+  // Clientes
+  const tuyo = c => c.cuota_mes != null && c.estado === 'activo' ? c.cuota_mes * c.parte / 100 : 0;
+  const base = clientes.reduce((a, c) => a + tuyo(c), 0), sinCuota = clientes.filter(c => c.cuota_mes == null && c.parte > 0 && c.estado === 'activo').length;
+  $('#neg-base').textContent = euros(base);
+  if (!$('#neg-clientes').contains(document.activeElement)) {
+    $('#neg-clientes').innerHTML = clientes.map(c => `<div class="cli ${abierto === c.id ? 'abierto' : ''}" data-cli="${c.id}">
+      <div class="fila"><div><p style="font-weight:600">${esc(c.nombre)}</p>
+        <p class="tiny">${esc(c.proyecto)} · tuyo ${fmt(c.parte)} %${c.cuota_mes != null ? ` · ${euros(c.cuota_mes)}/mes` : ' · cuota sin apuntar'}</p></div>
+        <span class="pill ${c.estado === 'activo' && c.parte > 0 ? 'on' : c.estado === 'pausado' ? 'off' : ''}">${c.parte > 0 && c.cuota_mes != null && c.estado === 'activo' ? '+' + euros(tuyo(c)) : c.estado}</span></div>
+      ${c.nota ? `<p class="tiny" style="margin-top:4px">${esc(c.nota)}</p>` : ''}
+      <div class="ed">
+        <div class="seg" data-estado>${['activo', 'propuesta', 'pausado'].map(e => `<button class="${c.estado === e ? 'act' : ''}" data-e="${e}">${e[0].toUpperCase() + e.slice(1)}</button>`).join('')}</div>
+        <div class="num"><input type="number" inputmode="decimal" data-cuota value="${c.cuota_mes ?? ''}" placeholder="Cuota €/mes"><input type="number" inputmode="numeric" data-parte value="${c.parte}" placeholder="Tu %"><button class="btn2" data-guardar-cli>Guardar</button></div>
+        <button class="salir" data-borrar-cli style="margin-top:10px">Quitar cliente</button>
+      </div></div>`).join('') || '<div class="muted">Sin clientes todavía.</div>';
+  }
+  $('#neg-base').nextElementSibling.textContent = `al mes fijos para ti (cuota × tu parte)${sinCuota ? ` · ${sinCuota} sin cuota apuntada` : ''}`;
+}
+
+async function guardarFuente(clave, valor){
+  const mes = mesDe(hoyStr()), ahora = new Date().toISOString();
+  (M[mes] ||= {});
+  if (valor == null) delete M[mes][clave]; else M[mes][clave] = {valor};
+  const n = neto(mes), filas = [{fecha: mes, clave: 'ingresos_mes', valor: n ?? 0, fuente: 'app', actualizado: ahora}];
+  M[mes].ingresos_mes = {valor: n ?? 0};
+  const r1 = valor == null ? await sb.from('metricas').delete().eq('fecha', mes).eq('clave', clave)
+    : await sb.from('metricas').upsert({fecha: mes, clave, valor, fuente: 'app', actualizado: ahora});
+  const r2 = await sb.from('metricas').upsert(filas);
+  if (r1.error || r2.error) return toast('No se ha guardado');
+  pintar(); toast('Guardado');
 }
 
 // Eventos
@@ -332,7 +470,47 @@ document.querySelectorAll('[data-guardar]').forEach(b => b.onclick = () => {
   inp.value = '';
   if (k === 'ingresos') guardar('ingresos_mes', v, hoyStr().slice(0, 8) + '01'); else guardar(k, v);
 });
-$('#mas-video').onclick = () => guardar('videos', (val(hoyStr(), 'videos') || 0) + 1);
+// Negocio
+$('#ir-negocio').onclick = () => document.querySelector('.tabbar [data-v="negocio"]').click();
+$('#neg-fuentes').addEventListener('change', e => {
+  const k = e.target.dataset.fuente; if (!k) return;
+  const t = e.target.value.trim().replace(',', '.'), v = t === '' ? null : parseFloat(t);
+  if (t !== '' && isNaN(v)) return toast('Escribe un número');
+  if (v === val(mesDe(hoyStr()), k)) return;
+  e.target.blur(); guardarFuente(k, v);
+});
+$('#neg-fuentes').addEventListener('keydown', e => { if (e.key === 'Enter') e.target.blur(); });
+$('#neg-clientes').onclick = async e => {
+  const el = e.target.closest('.cli'); if (!el) return;
+  const c = clientes.find(x => x.id == el.dataset.cli);
+  if (e.target.dataset.e) { el.querySelectorAll('[data-e]').forEach(b => b.classList.toggle('act', b === e.target)); return; }
+  if (e.target.hasAttribute('data-guardar-cli')) {
+    const cu = el.querySelector('[data-cuota]').value.trim(), pa = parseFloat(el.querySelector('[data-parte]').value);
+    const cambios = {cuota_mes: cu === '' ? null : parseFloat(cu.replace(',', '.')), parte: isNaN(pa) ? c.parte : Math.max(0, Math.min(100, pa)),
+      estado: el.querySelector('[data-e].act')?.dataset.e || c.estado};
+    const {error} = await sb.from('clientes').update(cambios).eq('id', c.id);
+    if (error) return toast('No se ha guardado');
+    Object.assign(c, cambios); abierto = null; document.activeElement.blur(); pintar(); return toast('Guardado');
+  }
+  if (e.target.hasAttribute('data-borrar-cli')) {
+    if (e.target.dataset.seguro !== '1') { e.target.dataset.seguro = '1'; e.target.textContent = 'Toca otra vez para quitarlo'; e.target.style.color = 'var(--rojo)'; return; }
+    const {error} = await sb.from('clientes').delete().eq('id', c.id);
+    if (error) return toast('No se ha quitado');
+    clientes = clientes.filter(x => x !== c); abierto = null; pintar(); return toast('Quitado');
+  }
+  if (e.target.closest('.ed')) return;
+  abierto = abierto === c.id ? null : c.id; document.activeElement?.blur?.(); pintar();
+};
+$('#cl-proy').onclick = e => { if (e.target.tagName === 'BUTTON') $('#cl-proy').querySelectorAll('button').forEach(b => b.classList.toggle('act', b === e.target)); };
+$('#cl-add').onclick = async () => {
+  const nombre = $('#cl-nombre').value.trim(); if (!nombre) return toast('Pon el nombre');
+  const proyecto = $('#cl-proy .act').textContent, cu = $('#cl-cuota').value.trim(), pa = parseFloat($('#cl-parte').value);
+  const fila = {nombre, proyecto, cuota_mes: cu === '' ? null : parseFloat(cu.replace(',', '.')), parte: isNaN(pa) ? (proyecto === 'Setty' ? 50 : 100) : pa};
+  const {data, error} = await sb.from('clientes').insert(fila).select().single();
+  if (error) return toast('No se ha guardado');
+  clientes.push(data); ['#cl-nombre', '#cl-cuota', '#cl-parte'].forEach(s => $(s).value = ''); pintar(); toast('Cliente añadido');
+};
+$('#mas-video').onclick =() => guardar('videos', (val(hoyStr(), 'videos') || 0) + 1);
 $('#add-prio').onclick = async () => {
   const t = $('#nueva-prio').value.trim(); if (!t || prios.length >= 3) return;
   const {data, error} = await sb.from('prioridades').insert({texto: t, fecha: hoyStr()}).select().single();
