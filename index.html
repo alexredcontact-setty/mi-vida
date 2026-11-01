@@ -84,6 +84,13 @@ input:focus{border-color:var(--acento)}
 .meses div{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:4px}
 .meses b{width:100%;border-radius:6px 6px 3px 3px;background:var(--card2);min-height:3px;transition:height .6s}
 .meses b.act{background:var(--acento)} .meses b.ok{background:var(--verde)}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-top:12px}
+.cal span{font-size:11px;color:var(--tx2);text-align:center;font-weight:600}
+.cal button{aspect-ratio:1;border-radius:10px;background:var(--card2);color:var(--tx2);font-size:14px;font-weight:600;padding:0;min-width:0}
+.cal button.verde{background:rgba(48,209,88,.22);color:var(--verde)} .cal button.rojo{background:rgba(255,69,58,.2);color:var(--rojo)}
+.cal button.libre{background:rgba(255,214,10,.18);color:var(--amarillo)} .cal button.incompleto{background:rgba(142,142,147,.22);color:var(--tx)}
+.cal button.hoy{outline:2px solid var(--tx2)} .cal button.sel{outline:2px solid var(--tx)} .cal button.fuera{visibility:hidden}
+.cal-ley{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:12px;font-size:12px;color:var(--tx2)} .cal-ley i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
 .meses em{font-style:normal;font-size:11px;color:var(--tx2)} .meses small{font-size:11px;color:var(--tx3)}
 .cli{cursor:pointer} .cli .ed{display:none;margin-top:10px} .cli.abierto .ed{display:block}
 .ed .num{margin-top:8px}
@@ -281,6 +288,15 @@ input:focus{border-color:var(--acento)}
       <div id="cu-noches" style="margin-top:6px"></div>
     </div>
 
+    <h2>Dieta</h2>
+    <div class="seg" id="dt-per" style="margin-bottom:10px"><button class="act" data-p="mes">Este mes</button><button data-p="mes-1">Mes pasado</button></div>
+    <div class="card">
+      <div class="fila"><div><p class="big" id="dt-res">—</p><p class="tiny" id="dt-sub"></p></div></div>
+      <div class="cal" id="dt-cal"></div>
+      <div class="cal-ley"><span><i style="background:var(--verde)"></i>Cumplido</span><span><i style="background:var(--rojo)"></i>Fallo</span><span><i style="background:var(--amarillo)"></i>Comida libre</span><span><i style="background:#8e8e93"></i>A medias de apuntar</span></div>
+    </div>
+    <div class="card" id="dt-dia" style="margin-top:10px"></div>
+
     <h2 id="cu-mes-tit">Resumen del mes</h2>
     <div class="seg" id="cu-mes-per" style="margin-bottom:10px"><button class="act" data-p="mes">Este mes</button><button data-p="mes-1">Mes pasado</button></div>
     <div class="card lista" id="cu-mes"></div>
@@ -415,7 +431,7 @@ const mesDe = s => s.slice(0, 8) + '01';
 // Vídeos del día: lo publicado según Zernio o lo apuntado a mano, lo que sea mayor
 const vid = d => Math.max(val(d, 'videos') || 0, val(d, 'videos_pub') || 0);
 // Periodos: semana actual, semana pasada, mes actual, mes pasado
-let perCu = 'sem', perCuMes = 'mes', perT = 'sem';
+let perCu = 'sem', perCuMes = 'mes', perT = 'sem', perDieta = 'mes', diaDieta = null;
 function periodo(tipo, hoy = hoyStr()){
   let desde, n;
   if (tipo.startsWith('sem')) { desde = addDias(lunes(hoy), tipo === 'sem' ? 0 : -7); n = 7; }
@@ -760,6 +776,30 @@ function pintarCuerpo(hoy){
     + fila('Pasos de media', pasM.length ? fmt(Math.round(media(pasM))) : '—') + fila('Días con 10.000 pasos', pasM.length ? `${pasM.filter(v => v >= 10000).length}/${pasM.length}` : '—')
     + fila('Sueño de media', suM.length ? media(suM).toFixed(1).replace('.', ',') + ' h' : '—') + fila('Noches a tiempo', conS ? `${atM}/${conS}` : '—');
 
+  // Dieta: calendario del mes con lo que comió cada día
+  const DT = P.dieta || {};
+  if (perDieta === 'mes' && !diaDieta && !periodo('mes', hoy).dias.some(d => DT[d]) && periodo('mes-1', hoy).dias.some(d => DT[d]) && !window._dtAuto) {
+    window._dtAuto = 1; perDieta = 'mes-1'; document.querySelectorAll('#dt-per button').forEach(b => b.classList.toggle('act', b.dataset.p === 'mes-1'));
+  }
+  const pd = periodo(perDieta, hoy), diasD = pd.dias;
+  const conDato = diasD.filter(d => DT[d]), verdes = conDato.filter(d => DT[d].estado === 'verde').length, rojos = conDato.filter(d => DT[d].estado === 'rojo').length;
+  $('#dt-res').textContent = conDato.length ? `${verdes}/${conDato.length}` : '—';
+  $('#dt-sub').textContent = conDato.length ? `días cumplidos en ${pd.nombre}${rojos ? ` · ${rojos} con fallo` : ''}` : `Sin comidas apuntadas en ${pd.nombre}`;
+  const offset = (new Date(diasD[0] + 'T12:00').getDay() + 6) % 7;
+  $('#dt-cal').innerHTML = ['L', 'M', 'X', 'J', 'V', 'S', 'D'].map(x => `<span>${x}</span>`).join('')
+    + '<button class="fuera"></button>'.repeat(offset)
+    + diasD.map(d => `<button data-dia="${d}" class="${DT[d]?.estado || ''} ${d === hoy ? 'hoy' : ''} ${d === diaDieta ? 'sel' : ''}">${Number(d.slice(8))}</button>`).join('');
+  const sel = DT[diaDieta] ? diaDieta : Object.keys(DT).filter(d => diasD.includes(d)).sort().pop();
+  if (sel && !diaDieta) document.querySelector(`#dt-cal [data-dia="${sel}"]`)?.classList.add('sel');
+  const ICO = {ok: '✅', mal: '⚠️', libre: '🍔', vacio: '·'}, NOM = {verde: 'Cumplido', rojo: 'Con fallos', libre: 'Con comida libre', incompleto: 'A medias de apuntar'};
+  $('#dt-dia').innerHTML = !sel ? '<p class="muted">Toca un día para ver lo que comiste.</p>'
+    : `<div class="fila" style="margin-bottom:8px"><p style="font-weight:600">${new Date(sel + 'T12:00').toLocaleDateString('es-ES', {weekday: 'long', day: 'numeric', month: 'long'})}</p><span class="pill ${DT[sel].estado === 'verde' ? 'on' : DT[sel].estado === 'rojo' ? 'off' : ''}">${NOM[DT[sel].estado]}</span></div>
+      ${DT[sel].tipo ? `<p class="tiny" style="margin-bottom:8px">${esc(DT[sel].tipo)}</p>` : ''}
+      <div class="lista">${DT[sel].comidas.map(c => `<div><p style="font-weight:600">${ICO[c.estado]} ${esc(c.nombre)}</p>
+        <p style="font-size:15px;margin-top:2px">${c.comio ? esc(c.comio) : '<span class="muted">Sin apuntar</span>'}</p>
+        <p class="tiny" style="margin-top:2px">Plan: ${esc(c.plan)}</p></div>`).join('')}</div>
+      ${(DT[sel].notas || []).map(n => `<p class="tiny" style="margin-top:10px">${esc(n)}</p>`).join('')}`;
+
   // Fotos
   const uf = ultimo('fotos');
   if (uf) { const prox = addDias(uf.fecha, 14), faltan = Math.round((new Date(prox + 'T12:00') - new Date(hoy + 'T12:00')) / 864e5);
@@ -933,10 +973,11 @@ $('#c-redes').addEventListener('change', async e => {
   M[hoy].seguidores = {valor: total}; pintar(); toast('Guardado');
 });
 $('#c-redes').addEventListener('keydown', e => { if (e.key === 'Enter') e.target.blur(); });
-document.querySelectorAll('#cu-per,#cu-mes-per,#t-per').forEach(sg => sg.onclick = e => {
+$('#dt-cal').onclick = e => { const d = e.target.closest('[data-dia]')?.dataset.dia; if (!d) return; diaDieta = d; pintar(); };
+document.querySelectorAll('#cu-per,#cu-mes-per,#t-per,#dt-per').forEach(sg => sg.onclick = e => {
   if (e.target.tagName !== 'BUTTON') return;
   sg.querySelectorAll('button').forEach(b => b.classList.toggle('act', b === e.target));
-  if (sg.id === 'cu-per') perCu = e.target.dataset.p; else if (sg.id === 'cu-mes-per') perCuMes = e.target.dataset.p; else perT = e.target.dataset.p;
+  if (sg.id === 'cu-per') perCu = e.target.dataset.p; else if (sg.id === 'cu-mes-per') perCuMes = e.target.dataset.p; else if (sg.id === 'dt-per') { perDieta = e.target.dataset.p; diaDieta = null; } else perT = e.target.dataset.p;
   pintar();
 });
 // Cierre del día
