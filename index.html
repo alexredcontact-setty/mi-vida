@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="es">
 <head>
+<meta name="ver" content="2026-11-02-2">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Mi Vida</title>
@@ -1141,6 +1142,21 @@ sb.auth.onAuthStateChange((_, s) => {
   if (dentro) cargar();
 });
 document.addEventListener('visibilitychange', () => { if (!document.hidden && !$('#app').hidden) cargar(); });
+</script>
+<script>
+// Se actualiza sola: al abrir o volver a la app, mira si hay versión nueva publicada y recarga saltándose la caché
+(function(){
+  const mia = document.querySelector('meta[name=ver]').content;
+  async function mirar(){
+    try {
+      const t = await (await fetch(location.pathname + '?c=' + Date.now(), {cache: 'no-store'})).text();
+      const m = t.match(/<meta name="ver" content="([^"]+)"/);
+      if (m && m[1] !== mia) location.replace(location.pathname + '?v=' + m[1]);
+    } catch (e) {}
+  }
+  mirar();
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') mirar(); });
+})();
 </script>
 </body>
 </html>
