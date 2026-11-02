@@ -163,6 +163,9 @@ input:focus{border-color:var(--acento)}
     <h2>Comidas</h2>
     <div class="card lista" id="comidas"></div>
 
+    <h2>Lista de la compra</h2>
+    <div class="card lista" id="compra"></div>
+
     <h2>Súper esta semana</h2>
     <div class="card" id="super-sem"></div>
 
@@ -563,6 +566,7 @@ function pintar(){
   $('#comidas').innerHTML = cm.map(c => `<div><p style="font-weight:600">${c.nombre}</p><p class="muted" style="font-size:15px">${c.detalle}</p></div>`).join('') || '<div class="muted">Sin plan cargado.</div>';
 
   // Súper esta semana (presupuesto 55 €) y comida del mes
+  pintarCompra();
   const TOPE = 55, lu0 = lunes(hoy), su = addDias(lu0, 6);
   const gSem = gastos.filter(x => x.fecha >= lu0 && x.fecha <= su), sup = gSem.filter(x => x.categoria === 'super').reduce((a, x) => a + Number(x.eur), 0);
   const fue = gSem.filter(x => x.categoria === 'comida_fuera').reduce((a, x) => a + Number(x.eur), 0);
@@ -641,6 +645,20 @@ function pintar(){
   pintarContenido(hoy);
   pintarCuerpo(hoy);
   pintarTiempo(hoy);
+}
+
+// Lista de la compra = panel `compra` (la escribe Claude); tocar una línea la marca como cogida
+function pintarCompra(){
+  const c = P.compra, its = (c && c.items) || [];
+  if (!its.length) { $('#compra').innerHTML = '<div class="muted">No hay lista. Pídemela y te la pongo aquí.</div>'; return; }
+  const faltan = its.filter(x => !x.hecho).length;
+  $('#compra').innerHTML = `<div class="fila"><p class="tiny">${esc(c.para || '')}${c.estimado ? ' · unos ' + esc(c.estimado) : ''}</p><span class="pill ${faltan ? '' : 'on'}">${faltan ? 'Faltan ' + faltan : 'Todo cogido'}</span></div>` +
+    its.map((x, i) => `<div class="fila" data-i="${i}" style="cursor:pointer;${x.hecho ? 'opacity:.45' : ''}"><div><p style="font-size:15px;${x.hecho ? 'text-decoration:line-through' : ''}">${x.hecho ? '✅' : '⬜️'} ${esc(x.q)}</p>${x.por ? `<p class="tiny">${esc(x.por)}</p>` : ''}</div><span style="font-weight:600">${esc(x.cant || '')}</span></div>`).join('');
+  $('#compra').querySelectorAll('[data-i]').forEach(el => el.onclick = async () => {
+    const it = its[+el.dataset.i]; it.hecho = !it.hecho; pintarCompra();
+    const {error} = await sb.from('paneles').update({datos: c}).eq('clave', 'compra');
+    if (error) { it.hecho = !it.hecho; pintarCompra(); alert('No se pudo guardar'); }
+  });
 }
 
 function pintarNegocio(hoy, ahora){
