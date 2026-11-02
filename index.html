@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="es">
 <head>
-<meta name="ver" content="2026-11-02-2">
+<meta name="ver" content="2026-11-03-1">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Mi Vida</title>
@@ -186,6 +186,14 @@ input:focus{border-color:var(--acento)}
       <div class="seg" id="ci-satisfaccion" style="margin-bottom:14px"><button data-v="1">1</button><button data-v="2">2</button><button data-v="3">3</button><button data-v="4">4</button><button data-v="5">5</button></div>
       <p style="font-weight:600;margin-bottom:8px">¿Cómo está tu ánimo en general?</p>
       <div class="seg" id="ci-animo" style="margin-bottom:14px"><button data-v="1">😞</button><button data-v="2">😕</button><button data-v="3">😐</button><button data-v="4">🙂</button><button data-v="5">😄</button></div>
+      <p style="font-weight:600;margin-bottom:8px">¿Cuánto estrés o ansiedad has tenido? <span class="tiny">(1 nada · 5 mucho)</span></p>
+      <div class="seg" id="ci-estres" style="margin-bottom:14px"><button data-v="1">1</button><button data-v="2">2</button><button data-v="3">3</button><button data-v="4">4</button><button data-v="5">5</button></div>
+      <p style="font-weight:600;margin-bottom:8px">¿Cuánta energía has tenido?</p>
+      <div class="seg" id="ci-energia" style="margin-bottom:14px"><button data-v="1">1</button><button data-v="2">2</button><button data-v="3">3</button><button data-v="4">4</button><button data-v="5">5</button></div>
+      <p style="font-weight:600;margin-bottom:8px">¿A qué hora has desayunado? <span class="tiny">(meta: antes de las 11:00)</span></p>
+      <div class="num" style="margin-bottom:14px"><input id="ci-desayuno" type="time"><button class="btn2" id="ci-desayuno-ok">Guardar</button></div>
+      <p style="font-weight:600;margin-bottom:8px">¿Cuántos minutos de marca personal? <span class="tiny">(0 si no hubo)</span></p>
+      <div class="num" style="margin-bottom:14px"><input id="ci-marca" type="number" inputmode="numeric" step="5" min="0" placeholder="Minutos, p. ej. 60"><button class="btn2" id="ci-marca-ok">Guardar</button></div>
       <p style="font-weight:600;margin-bottom:8px">¿Cuántas horas dormiste anoche?</p>
       <div class="num" style="margin-bottom:14px"><input id="ci-dormido" type="number" inputmode="decimal" step="0.5" placeholder="Horas, p. ej. 7,5"><button class="btn2" id="ci-dormido-ok">Guardar</button></div>
       <p style="font-weight:600;margin-bottom:8px">¿Qué tienes en la cabeza?</p>
@@ -589,13 +597,17 @@ function pintar(){
   $('#anoche').innerHTML = sh ? `<div class="fila"><div><p class="big">${sh.texto}</p><p class="tiny">${String(sh.valor).replace('.', ',')} h sin actividad en Claude</p></div><span class="pill ${sc ? 'on' : 'off'}">${sc ? 'A tiempo ✓' : 'Tarde'}</span></div>`
     : '<p class="muted">Todavía no hay datos de anoche: se calculan al primer uso de Claude por la mañana.</p>';
   // Cierre del día
-  for (const k of ['satisfaccion', 'animo']) document.querySelectorAll(`#ci-${k} button`).forEach(b => b.classList.toggle('act', Number(b.dataset.v) === Number(val(hoy, k))));
+  for (const k of ['satisfaccion', 'animo', 'estres', 'energia']) document.querySelectorAll(`#ci-${k} button`).forEach(b => b.classList.toggle('act', Number(b.dataset.v) === Number(val(hoy, k))));
+  const hd = val(hoy, 'desayuno_hora'); if (document.activeElement !== $('#ci-desayuno')) $('#ci-desayuno').value = hd == null ? '' : String(Math.floor(hd)).padStart(2, '0') + ':' + String(Math.round((hd % 1) * 60)).padStart(2, '0');
+  if (document.activeElement !== $('#ci-marca')) $('#ci-marca').value = val(hoy, 'marca_min') ?? '';
   if (document.activeElement !== $('#ci-dormido')) $('#ci-dormido').value = val(hoy, 'dormido_manual') ?? '';
   if (document.activeElement !== $('#ci-pensamientos')) $('#ci-pensamientos').value = M[hoy]?.pensamientos?.texto || '';
   const sem = periodo('sem').pasados, med = k => { const xs = sem.map(d => val(d, k)).filter(v => v != null).map(Number); return xs.length ? xs.reduce((x, y) => x + y, 0) / xs.length : null; };
-  const ms = med('satisfaccion'), ma = med('animo'), mdo = med('dormido_manual');
+  const ms = med('satisfaccion'), ma = med('animo'), mdo = med('dormido_manual'), mEs = med('estres'), men = med('energia');
+  const dsy = sem.map(d => val(d, 'desayuno_hora')).filter(v => v != null).map(Number), dsyOk = dsy.filter(h => h < 11).length;
+  const mk = sem.map(d => val(d, 'marca_min')).filter(v => v != null).map(Number), mkTot = mk.reduce((x, y) => x + y, 0);
   $('#ci-semana').textContent = ms == null && ma == null && mdo == null ? 'Rellénalo cada noche: aquí verás la media de la semana.'
-    : 'Esta semana: ' + [ms != null && `satisfacción ${ms.toFixed(1).replace('.', ',')}/5`, ma != null && `ánimo ${ma.toFixed(1).replace('.', ',')}/5`, mdo != null && `duermes ${mdo.toFixed(1).replace('.', ',')} h`].filter(Boolean).join(' · ');
+    : 'Esta semana: ' + [ms != null && `satisfacción ${ms.toFixed(1).replace('.', ',')}/5`, ma != null && `ánimo ${ma.toFixed(1).replace('.', ',')}/5`, mdo != null && `duermes ${mdo.toFixed(1).replace('.', ',')} h`, mEs != null && `estrés ${mEs.toFixed(1).replace('.', ',')}/5`, men != null && `energía ${men.toFixed(1).replace('.', ',')}/5`, dsy.length && `desayuno antes de las 11: ${dsyOk}/${dsy.length} días`, mk.length && `marca personal ${mkTot} min`].filter(Boolean).join(' · ');
 
   $('#sync').textContent = P.sync ? 'Datos del Mac actualizados: ' + new Date(P.sync.hora).toLocaleString('es-ES', {timeZone: tz, day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'}) : '';
 
@@ -1101,7 +1113,9 @@ $('#seg-agenda').onclick = e => {
   perAg = e.target.dataset.p; pintarAgenda(hoyStr());
 };
 // Cierre del día
-for (const k of ['satisfaccion', 'animo']) document.querySelectorAll(`#ci-${k} button`).forEach(b => b.onclick = () => guardar(k, Number(b.dataset.v)));
+for (const k of ['satisfaccion', 'animo', 'estres', 'energia']) document.querySelectorAll(`#ci-${k} button`).forEach(b => b.onclick = () => guardar(k, Number(b.dataset.v)));
+$('#ci-desayuno-ok').onclick = () => { const v = $('#ci-desayuno').value; if (!/^\d{2}:\d{2}$/.test(v)) return toast('Pon la hora del desayuno'); const [h, m] = v.split(':').map(Number); $('#ci-desayuno').blur(); guardar('desayuno_hora', Math.round((h + m / 60) * 100) / 100); };
+$('#ci-marca-ok').onclick = () => { const v = parseInt($('#ci-marca').value, 10); if (isNaN(v) || v < 0 || v > 900) return toast('Pon los minutos, 0 si no hubo'); $('#ci-marca').blur(); guardar('marca_min', v); };
 $('#ci-dormido-ok').onclick = () => { const v = parseFloat($('#ci-dormido').value.replace(',', '.')); if (isNaN(v) || v < 0 || v > 16) return toast('Pon las horas, de 0 a 16'); $('#ci-dormido').blur(); guardar('dormido_manual', v); };
 $('#ci-pensamientos-ok').onclick = async () => {
   const t = $('#ci-pensamientos').value.trim(), hoy = hoyStr();
