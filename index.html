@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="es">
 <head>
-<meta name="ver" content="2026-11-03-1">
+<meta name="ver" content="2026-11-07-1">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Mi Vida</title>
@@ -701,18 +701,15 @@ function pintarNegocio(hoy, ahora){
 
   // Fran: desglose real de Stripe
   const pf = P.fran, fm = pf?.meses || [];
-  const fmes = fm.find(x => x.mes === mes.slice(0, 7)), fant = fm.find(x => x.mes === addMeses(mes, -1).slice(0, 7));
+  const fmes = fm.find(x => x.mes === mes.slice(0, 7));
   const eur2 = n => new Intl.NumberFormat('es-ES', {useGrouping: 'always', minimumFractionDigits: 2, maximumFractionDigits: 2}).format(n) + ' €';
   const filaF = (a, b, c) => `<div class="fila" style="padding:5px 0"><span>${a}</span><span style="display:flex;gap:12px"><span class="tiny">${c || ''}</span><span style="font-weight:600;min-width:84px;text-align:right">${b}</span></span></div>`;
-  const desglose = x => Object.entries(x.mensuales).sort((a, b) => b[0] - a[0]).map(([p, v]) => filaF(`Mensuales a ${p.replace('.', ',')} €`, eur2(v.eur), v.n + ' ×')).join('')
-    + (x.anuales_nuevos.n ? filaF('Anuales nuevos', eur2(x.anuales_nuevos.eur), x.anuales_nuevos.n + ' ×') : '')
-    + (x.anuales_renovados.n ? filaF('Anuales renovados', eur2(x.anuales_renovados.eur), x.anuales_renovados.n + ' ×') : '')
-    + (x.reembolsos.n ? filaF('Devoluciones', '− ' + eur2(x.reembolsos.eur), x.reembolsos.n + ' ×') : '');
+  const franAcumTot = pf?.facturado_hasta ? fm.filter(x => x.mes > pf.facturado_hasta).reduce((a, x) => a + x.parte_alex_10, 0) : 0;
+  const mesCobro = pf?.se_cobra ? new Date(pf.se_cobra + '-01T12:00').toLocaleDateString('es-ES', {month: 'long'}) : 'la próxima factura';
   $('#neg-fran').innerHTML = !fmes ? '<p class="muted">Se actualiza solo cada hora desde Stripe.</p>'
-    : `<div class="fila"><div><p class="big">${eur2(fmes.parte_alex_10)}</p><p class="tiny">tu 10 % de este mes · sin IVA ni comisiones · aún no cuenta en tu neto</p></div></div>
-      <div style="margin-top:10px">${desglose(fmes)}</div>
-      <div style="border-top:1px solid #2c2c2e;margin-top:6px;padding-top:6px">${filaF('Cobrado con IVA', eur2(fmes.bruto_con_iva))}${filaF('Sin IVA', eur2(fmes.sin_iva))}${fmes.comisiones_stripe != null ? filaF('− Comisiones de Stripe', eur2(fmes.comisiones_stripe)) : ''}</div>
-      <p class="tiny" style="margin-top:8px">${fant ? `El mes pasado: ${eur2(fant.parte_alex_10)} para ti. ` : ''}${pf.facturado_hasta ? `<b style="color:var(--tx)">Te llega en ${pf.se_cobra ? new Date(pf.se_cobra + '-01T12:00').toLocaleDateString('es-ES', {month: 'long'}) : 'la próxima factura'}: ${eur2(fm.filter(x => x.mes > pf.facturado_hasta).reduce((a, x) => a + x.parte_alex_10, 0))}</b> + IVA (acumulado desde ${new Date(addMeses(pf.facturado_hasta + '-01', 1) + 'T12:00').toLocaleDateString('es-ES', {month: 'long'})}). ` : ''} Actualizado ${new Date(pf.generado).toLocaleString('es-ES', {timeZone: tz, day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'})}.</p>`;
+    : `<div class="fila"><div><p class="big">${eur2(franAcumTot)}</p><p class="tiny">lo que llevas acumulado · te llega en ${mesCobro} + IVA</p></div></div>
+      <div style="border-top:1px solid #2c2c2e;margin-top:10px;padding-top:6px">${filaF('Este mes', eur2(fmes.parte_alex_10))}</div>
+      <p class="tiny" style="margin-top:8px">Actualizado ${new Date(pf.generado).toLocaleString('es-ES', {timeZone: tz, day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'})}.</p>`;
 
   // Dinero hasta enero: lo que hay + lo que entra − lo que sale
   const C = P.caja;
